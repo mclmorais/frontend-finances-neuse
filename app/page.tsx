@@ -1,39 +1,72 @@
 'use client';
 
 import { ProtectedRoute } from '@/components/protected-route';
-import { useAuth } from '@/lib/auth-context';
-import { Button } from '@/components/ui/button';
+import { AppLayout } from '@/components/app-layout';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 
 export default function Home() {
-  const { user, signOut } = useAuth();
-
   return (
     <ProtectedRoute>
-      <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
-        <header className="border-b bg-white dark:bg-zinc-900">
-          <div className="container mx-auto flex h-16 items-center justify-between px-4">
-            <h1 className="text-xl font-semibold">Finance Neuse</h1>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                {user?.email}
-              </span>
-              <Button variant="outline" onClick={signOut}>
-                Sign out
-              </Button>
-            </div>
-          </div>
-        </header>
-        <main className="container mx-auto flex-1 px-4 py-8">
-          <div className="flex flex-col items-center justify-center gap-6 text-center">
-            <h2 className="text-3xl font-bold">
-              Welcome to Finance Neuse
-            </h2>
-            <p className="max-w-md text-lg text-zinc-600 dark:text-zinc-400">
-              Your personal finance management application.
+      <AppLayout>
+        <div className="mx-auto max-w-4xl space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground mt-2">
+              Welcome to your personal finance management dashboard
             </p>
           </div>
-        </main>
-      </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Stats</CardTitle>
+                <CardDescription>Your financial overview at a glance</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Stats will appear here once you start tracking your finances.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+                <CardDescription>Your latest transactions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  No recent activity to display.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Budget Summary</CardTitle>
+                <CardDescription>Track your spending limits</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Create budgets to track your spending.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Goals</CardTitle>
+                <CardDescription>Your financial objectives</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Set and track your financial goals.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </AppLayout>
     </ProtectedRoute>
   );
 }
