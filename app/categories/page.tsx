@@ -6,45 +6,29 @@ import { AppLayout } from '@/components/app-layout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FolderTree, Plus, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 import { CategoryCard } from '@/components/category/category-card';
 import { CategoryFormDialog } from '@/components/category/category-form-dialog';
 import { DeleteCategoryDialog } from '@/components/category/delete-category-dialog';
 import {
-  getCategories,
-  createCategory,
-  updateCategory,
-  deleteCategory,
-} from '@/lib/api/categories';
+  useCategories,
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+} from '@/lib/hooks/use-categories';
 import type { Category, CreateCategoryRequest } from '@/lib/types/category';
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = React.useState<Category[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  // UI state (not data fetching state)
   const [formOpen, setFormOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [editingCategory, setEditingCategory] = React.useState<Category | undefined>(undefined);
   const [deletingCategory, setDeletingCategory] = React.useState<Category | null>(null);
-  const [submitting, setSubmitting] = React.useState(false);
 
-  // Fetch categories on mount
-  React.useEffect(() => {
-    loadCategories();
-  }, []);
-
-  const loadCategories = async () => {
-    try {
-      setLoading(true);
-      const data = await getCategories();
-      setCategories(data);
-    } catch (error) {
-      toast.error('Failed to load categories', {
-        description: error instanceof Error ? error.message : 'An error occurred',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // TanStack Query hooks
+  const { data: categories = [], isLoading } = useCategories();
+  const createMutation = useCreateCategory();
+  const updateMutation = useUpdateCategory();
+  const deleteMutation = useDeleteCategory();
 
   const handleCreate = () => {
     setEditingCategory(undefined);
@@ -62,46 +46,23 @@ export default function CategoriesPage() {
   };
 
   const handleFormSubmit = async (data: CreateCategoryRequest) => {
-    try {
-      setSubmitting(true);
-      if (editingCategory) {
-        // Update existing category
-        await updateCategory(editingCategory.id, data);
-        toast.success('Category updated successfully');
-      } else {
-        // Create new category
-        await createCategory(data);
-        toast.success('Category created successfully');
-      }
-      setFormOpen(false);
-      setEditingCategory(undefined);
-      await loadCategories();
-    } catch (error) {
-      toast.error(editingCategory ? 'Failed to update category' : 'Failed to create category', {
-        description: error instanceof Error ? error.message : 'An error occurred',
-      });
-    } finally {
-      setSubmitting(false);
+    if (editingCategory) {
+      // Update existing category
+      await updateMutation.mutateAsync({ id: editingCategory.id, data });
+    } else {
+      // Create new category
+      await createMutation.mutateAsync(data);
     }
+    setFormOpen(false);
+    setEditingCategory(undefined);
   };
 
   const handleDeleteConfirm = async () => {
     if (!deletingCategory) return;
 
-    try {
-      setSubmitting(true);
-      await deleteCategory(deletingCategory.id);
-      toast.success('Category deleted successfully');
-      setDeleteOpen(false);
-      setDeletingCategory(null);
-      await loadCategories();
-    } catch (error) {
-      toast.error('Failed to delete category', {
-        description: error instanceof Error ? error.message : 'An error occurred',
-      });
-    } finally {
-      setSubmitting(false);
-    }
+    await deleteMutation.mutateAsync(deletingCategory.id);
+    setDeleteOpen(false);
+    setDeletingCategory(null);
   };
 
   const incomeCategories = categories.filter((cat) => cat.type === 'income');
@@ -124,7 +85,7 @@ export default function CategoriesPage() {
             </Button>
           </div>
 
-          {loading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
             </div>
@@ -230,7 +191,7 @@ export default function CategoriesPage() {
           onOpenChange={setFormOpen}
           onSubmit={handleFormSubmit}
           category={editingCategory}
-          isLoading={submitting}
+          isLoading={createMutation.isPending || updateMutation.isPending}
         />
 
         {/* Delete Confirmation Dialog */}
@@ -239,7 +200,7 @@ export default function CategoriesPage() {
           onOpenChange={setDeleteOpen}
           onConfirm={handleDeleteConfirm}
           category={deletingCategory}
-          isLoading={submitting}
+          isLoading={deleteMutation.isPending}
         />
       </AppLayout>
     </ProtectedRoute>
