@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { ModeToggle } from "@/components/mode-toggle"
 
 const navigationItems = [
   {
@@ -104,6 +105,7 @@ export function AppSidebar() {
             <span className="truncate text-sm font-medium">{user.email}</span>
             <span className="text-xs text-sidebar-foreground/70">Logged in</span>
           </div>
+          <ModeToggle />
           <Button
             variant="ghost"
             size="icon-sm"
