@@ -10,6 +10,7 @@ import { TrendingDown, Plus, Calendar, DollarSign } from 'lucide-react';
 import { ExpensesTable } from '@/components/expense/expenses-table';
 import { ExpenseFormDialog } from '@/components/expense/expense-form-dialog';
 import { MonthNavigation } from '@/components/expense/month-navigation';
+import { CategorySpendingChart } from '@/components/expense/category-spending-chart';
 import {
   useExpenses,
   useExpensesByMonth,
@@ -227,6 +228,14 @@ export default function ExpensesPage() {
                   </CardContent>
                 </Card>
               </div>
+
+              <CategorySpendingChart
+                expenses={displayedExpenses}
+                categories={categories}
+                selectedMonth={selectedMonth}
+                currentYear={currentYear}
+                isLoading={isTableLoading}
+              />
 
               <MonthNavigation
                 selectedMonth={selectedMonth}
