@@ -1,16 +1,121 @@
 'use client';
 
+import * as React from 'react';
 import { ProtectedRoute } from '@/components/protected-route';
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, Plus, Calendar, DollarSign } from 'lucide-react';
+import { IncomesTable } from '@/components/income/incomes-table';
+import { IncomeFormDialog } from '@/components/income/income-form-dialog';
+import { MonthNavigation } from '@/components/expense/month-navigation';
+import { AccountIncomeChart } from '@/components/income/account-income-chart';
+import {
+  useIncomes,
+  useIncomesByMonth,
+  useCreateIncome,
+  useUpdateIncome,
+  useDeleteIncome,
+} from '@/lib/hooks/use-incomes';
+import { useAccounts } from '@/lib/hooks/use-accounts';
+import type { Income } from '@/lib/types/income';
+import { getCurrentMonthYear, formatMonthYear, type MonthYear } from '@/lib/utils/date-helpers';
 
 export default function IncomesPage() {
+  const [isFormOpen, setIsFormOpen] = React.useState(false);
+  const [editingIncome, setEditingIncome] = React.useState<Income | undefined>();
+  const [selectedMonth, setSelectedMonth] = React.useState<MonthYear | null>(getCurrentMonthYear());
+
+  // Calculate date values for queries
+  const now = new Date();
+  const currentYear = now.getFullYear().toString();
+  const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-indexed, API expects 1-12
+
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1);
+  const lastMonthYear = lastMonthDate.getFullYear().toString();
+  const lastMonth = (lastMonthDate.getMonth() + 1).toString().padStart(2, '0');
+
+  // Fetch data
+  const { data: incomes = [], isLoading: isLoadingIncomes } = useIncomes();
+  const { data: thisMonthIncomes = [], isLoading: isLoadingThisMonth } = useIncomesByMonth(currentYear, currentMonth);
+  const { data: lastMonthIncomes = [], isLoading: isLoadingLastMonth } = useIncomesByMonth(lastMonthYear, lastMonth);
+  const { data: selectedMonthIncomes = [], isLoading: isLoadingSelectedMonth } = useIncomesByMonth(
+    selectedMonth?.year || currentYear,
+    selectedMonth?.month || currentMonth
+  );
+  const { data: accounts = [], isLoading: isLoadingAccounts } = useAccounts();
+
+  // Mutations
+  const createMutation = useCreateIncome();
+  const updateMutation = useUpdateIncome();
+  const deleteMutation = useDeleteIncome();
+
+  const isLoading = isLoadingIncomes || isLoadingThisMonth || isLoadingLastMonth || isLoadingAccounts;
+
+  // Determine which incomes to display in the table
+  const displayedIncomes = selectedMonth ? selectedMonthIncomes : incomes;
+  const isTableLoading = selectedMonth ? isLoadingSelectedMonth : isLoadingIncomes;
+
+  const thisMonthTotal = thisMonthIncomes.reduce((sum, inc) => sum + parseFloat(inc.value), 0);
+  const lastMonthTotal = lastMonthIncomes.reduce((sum, inc) => sum + parseFloat(inc.value), 0);
+
+  // Calculate average for last 6 months
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+  const lastSixMonthsIncomes = incomes.filter((income) => {
+    const incomeDate = new Date(income.date);
+    return incomeDate >= sixMonthsAgo;
+  });
+
+  const averagePerMonth =
+    lastSixMonthsIncomes.length > 0
+      ? lastSixMonthsIncomes.reduce((sum, inc) => sum + parseFloat(inc.value), 0) / 6
+      : 0;
+
+  const handleOpenForm = (income?: Income) => {
+    setEditingIncome(income);
+    setIsFormOpen(true);
+  };
+
+  const handleCloseForm = () => {
+    setIsFormOpen(false);
+    setEditingIncome(undefined);
+  };
+
+  const handleSubmit = async (data: {
+    accountId: number;
+    value: number;
+    description?: string;
+    date: string;
+  }) => {
+    // Convert value from number to string with 2 decimal places
+    const formattedData = {
+      ...data,
+      value: data.value.toFixed(2),
+      description: data.description || '',
+    };
+
+    if (editingIncome) {
+      await updateMutation.mutateAsync({
+        id: editingIncome.id,
+        data: formattedData,
+      });
+    } else {
+      await createMutation.mutateAsync(formattedData);
+    }
+    handleCloseForm();
+  };
+
+  const handleDelete = async (id: number) => {
+    await deleteMutation.mutateAsync(id);
+  };
+
   return (
     <ProtectedRoute>
       <AppLayout>
-        <div className="mx-auto max-w-4xl space-y-6">
+        <div className="mx-auto max-w-6xl space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Incomes</h1>
@@ -18,104 +123,161 @@ export default function IncomesPage() {
                 Track and manage your income sources
               </p>
             </div>
-            <Button>
+            <Button onClick={() => handleOpenForm()}>
               <Plus className="mr-2 size-4" />
               Add Income
             </Button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-green-500/10">
-                    <Calendar className="size-5 text-green-500" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">This Month</CardTitle>
-                    <CardDescription className="text-xs">Total income</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">$0.00</p>
-                <p className="text-xs text-muted-foreground">0 transactions</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10">
-                    <TrendingUp className="size-5 text-emerald-500" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">Last Month</CardTitle>
-                    <CardDescription className="text-xs">Previous period</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">$0.00</p>
-                <p className="text-xs text-muted-foreground">0 transactions</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-teal-500/10">
-                    <DollarSign className="size-5 text-teal-500" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">Average/Month</CardTitle>
-                    <CardDescription className="text-xs">Last 6 months</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">$0.00</p>
-                <p className="text-xs text-muted-foreground">No data yet</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Income</CardTitle>
-              <CardDescription>Your latest income transactions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <div className="flex size-16 items-center justify-center rounded-full bg-muted mb-4">
-                  <TrendingUp className="size-8 text-muted-foreground" />
-                </div>
-                <p className="text-sm font-medium">No income recorded yet</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Click &quot;Add Income&quot; to record your first transaction
-                </p>
+          {isLoading ? (
+            <>
+              <div className="grid gap-4 md:grid-cols-3">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i}>
+                    <CardHeader>
+                      <Skeleton className="h-10 w-full" />
+                    </CardHeader>
+                    <CardContent>
+                      <Skeleton className="h-8 w-24 mb-2" />
+                      <Skeleton className="h-4 w-32" />
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-4 w-64" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-64 w-full" />
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <>
+              <div className="grid gap-4 md:grid-cols-3">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <div className="flex size-10 items-center justify-center rounded-lg bg-green-500/10">
+                        <Calendar className="size-5 text-green-500" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base">This Month</CardTitle>
+                        <CardDescription className="text-xs">Total income</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">
+                      R$ {thisMonthTotal.toFixed(2).replace('.', ',')}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {thisMonthIncomes.length} transaction{thisMonthIncomes.length !== 1 ? 's' : ''}
+                    </p>
+                  </CardContent>
+                </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Getting Started</CardTitle>
-              <CardDescription>Tips for tracking income</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Tracking your income helps you understand your financial capacity. Here are some tips:
-              </p>
-              <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                <li>Record all income sources including salary, freelance, and passive income</li>
-                <li>Categorize income by source to understand your revenue streams</li>
-                <li>Track irregular income to better plan for variable months</li>
-                <li>Compare income vs expenses to monitor your savings rate</li>
-              </ul>
-            </CardContent>
-          </Card>
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10">
+                        <TrendingUp className="size-5 text-emerald-500" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base">Last Month</CardTitle>
+                        <CardDescription className="text-xs">Previous period</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">
+                      R$ {lastMonthTotal.toFixed(2).replace('.', ',')}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {lastMonthIncomes.length} transaction{lastMonthIncomes.length !== 1 ? 's' : ''}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <div className="flex size-10 items-center justify-center rounded-lg bg-teal-500/10">
+                        <DollarSign className="size-5 text-teal-500" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base">Average/Month</CardTitle>
+                        <CardDescription className="text-xs">Last 6 months</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">
+                      R$ {averagePerMonth.toFixed(2).replace('.', ',')}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {lastSixMonthsIncomes.length > 0
+                        ? `Based on ${lastSixMonthsIncomes.length} transactions`
+                        : 'No data yet'}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <AccountIncomeChart
+                incomes={displayedIncomes}
+                accounts={accounts}
+                selectedMonth={selectedMonth}
+                currentYear={currentYear}
+                isLoading={isTableLoading}
+              />
+
+              <MonthNavigation
+                selectedMonth={selectedMonth}
+                onMonthSelect={setSelectedMonth}
+              />
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    {selectedMonth
+                      ? `${formatMonthYear(selectedMonth, currentYear)} Incomes`
+                      : 'All Incomes'}
+                  </CardTitle>
+                  <CardDescription>
+                    {selectedMonth
+                      ? `Viewing ${displayedIncomes.length} transaction${displayedIncomes.length !== 1 ? 's' : ''} from ${formatMonthYear(selectedMonth, currentYear)}`
+                      : 'View and manage all your income transactions'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isTableLoading ? (
+                    <Skeleton className="h-64 w-full" />
+                  ) : (
+                    <IncomesTable
+                      incomes={displayedIncomes}
+                      accounts={accounts}
+                      onEdit={handleOpenForm}
+                      onDelete={handleDelete}
+                      isDeleting={deleteMutation.isPending}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
+
+        <IncomeFormDialog
+          open={isFormOpen}
+          onOpenChange={handleCloseForm}
+          onSubmit={handleSubmit}
+          income={editingIncome}
+          accounts={accounts}
+          isLoading={createMutation.isPending || updateMutation.isPending}
+        />
       </AppLayout>
     </ProtectedRoute>
   );
