@@ -3,8 +3,8 @@ export interface Expense {
   userId: string;
   categoryId: number;
   accountId: number;
-  value: number;
-  description: string;
+  value: string;
+  description: string | null;
   date: string; // ISO date string
   createdAt?: string;
   updatedAt?: string;
@@ -13,7 +13,7 @@ export interface Expense {
 export interface CreateExpenseRequest {
   categoryId: number;
   accountId: number;
-  value: number;
+  value: string;
   description: string;
   date: string; // ISO date string
 }
@@ -21,7 +21,7 @@ export interface CreateExpenseRequest {
 export interface UpdateExpenseRequest {
   categoryId?: number;
   accountId?: number;
-  value?: number;
+  value?: string;
   description?: string;
   date?: string;
 }

@@ -9,8 +9,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingDown, Plus, Calendar, DollarSign } from 'lucide-react';
 import { ExpensesTable } from '@/components/expense/expenses-table';
 import { ExpenseFormDialog } from '@/components/expense/expense-form-dialog';
+import { MonthNavigation } from '@/components/expense/month-navigation';
 import {
   useExpenses,
+  useExpensesByMonth,
   useCreateExpense,
   useUpdateExpense,
   useDeleteExpense,
@@ -18,13 +20,30 @@ import {
 import { useCategories } from '@/lib/hooks/use-categories';
 import { useAccounts } from '@/lib/hooks/use-accounts';
 import type { Expense } from '@/lib/types/expense';
+import { getCurrentMonthYear, formatMonthYear, type MonthYear } from '@/lib/utils/date-helpers';
 
 export default function ExpensesPage() {
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingExpense, setEditingExpense] = React.useState<Expense | undefined>();
+  const [selectedMonth, setSelectedMonth] = React.useState<MonthYear | null>(getCurrentMonthYear());
+
+  // Calculate date values for queries
+  const now = new Date();
+  const currentYear = now.getFullYear().toString();
+  const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-indexed, API expects 1-12
+
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1);
+  const lastMonthYear = lastMonthDate.getFullYear().toString();
+  const lastMonth = (lastMonthDate.getMonth() + 1).toString().padStart(2, '0');
 
   // Fetch data
   const { data: expenses = [], isLoading: isLoadingExpenses } = useExpenses();
+  const { data: thisMonthExpenses = [], isLoading: isLoadingThisMonth } = useExpensesByMonth(currentYear, currentMonth);
+  const { data: lastMonthExpenses = [], isLoading: isLoadingLastMonth } = useExpensesByMonth(lastMonthYear, lastMonth);
+  const { data: selectedMonthExpenses = [], isLoading: isLoadingSelectedMonth } = useExpensesByMonth(
+    selectedMonth?.year || currentYear,
+    selectedMonth?.month || currentMonth
+  );
   const { data: categories = [], isLoading: isLoadingCategories } = useCategories();
   const { data: accounts = [], isLoading: isLoadingAccounts } = useAccounts();
 
@@ -33,32 +52,14 @@ export default function ExpensesPage() {
   const updateMutation = useUpdateExpense();
   const deleteMutation = useDeleteExpense();
 
-  const isLoading = isLoadingExpenses || isLoadingCategories || isLoadingAccounts;
+  const isLoading = isLoadingExpenses || isLoadingThisMonth || isLoadingLastMonth || isLoadingCategories || isLoadingAccounts;
 
-  // Calculate statistics
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
+  // Determine which expenses to display in the table
+  const displayedExpenses = selectedMonth ? selectedMonthExpenses : expenses;
+  const isTableLoading = selectedMonth ? isLoadingSelectedMonth : isLoadingExpenses;
 
-  const thisMonthExpenses = expenses.filter((expense) => {
-    const expenseDate = new Date(expense.date);
-    return (
-      expenseDate.getMonth() === currentMonth &&
-      expenseDate.getFullYear() === currentYear
-    );
-  });
-
-  const lastMonthExpenses = expenses.filter((expense) => {
-    const expenseDate = new Date(expense.date);
-    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-    const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-    return (
-      expenseDate.getMonth() === lastMonth &&
-      expenseDate.getFullYear() === lastMonthYear
-    );
-  });
-
-  const thisMonthTotal = thisMonthExpenses.reduce((sum, exp) => sum + exp.value, 0);
-  const lastMonthTotal = lastMonthExpenses.reduce((sum, exp) => sum + exp.value, 0);
+  const thisMonthTotal = thisMonthExpenses.reduce((sum, exp) => sum + parseFloat(exp.value), 0);
+  const lastMonthTotal = lastMonthExpenses.reduce((sum, exp) => sum + parseFloat(exp.value), 0);
 
   // Calculate average for last 6 months
   const sixMonthsAgo = new Date();
@@ -71,7 +72,7 @@ export default function ExpensesPage() {
 
   const averagePerMonth =
     lastSixMonthsExpenses.length > 0
-      ? lastSixMonthsExpenses.reduce((sum, exp) => sum + exp.value, 0) / 6
+      ? lastSixMonthsExpenses.reduce((sum, exp) => sum + parseFloat(exp.value), 0) / 6
       : 0;
 
   const handleOpenForm = (expense?: Expense) => {
@@ -88,16 +89,23 @@ export default function ExpensesPage() {
     categoryId: number;
     accountId: number;
     value: number;
-    description: string;
+    description?: string;
     date: string;
   }) => {
+    // Convert value from number to string with 2 decimal places
+    const formattedData = {
+      ...data,
+      value: data.value.toFixed(2),
+      description: data.description || '',
+    };
+
     if (editingExpense) {
       await updateMutation.mutateAsync({
         id: editingExpense.id,
-        data,
+        data: formattedData,
       });
     } else {
-      await createMutation.mutateAsync(data);
+      await createMutation.mutateAsync(formattedData);
     }
     handleCloseForm();
   };
@@ -220,22 +228,37 @@ export default function ExpensesPage() {
                 </Card>
               </div>
 
+              <MonthNavigation
+                selectedMonth={selectedMonth}
+                onMonthSelect={setSelectedMonth}
+              />
+
               <Card>
                 <CardHeader>
-                  <CardTitle>All Expenses</CardTitle>
+                  <CardTitle>
+                    {selectedMonth
+                      ? `${formatMonthYear(selectedMonth, currentYear)} Expenses`
+                      : 'All Expenses'}
+                  </CardTitle>
                   <CardDescription>
-                    View and manage all your expense transactions
+                    {selectedMonth
+                      ? `Viewing ${displayedExpenses.length} transaction${displayedExpenses.length !== 1 ? 's' : ''} from ${formatMonthYear(selectedMonth, currentYear)}`
+                      : 'View and manage all your expense transactions'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ExpensesTable
-                    expenses={expenses}
-                    categories={categories}
-                    accounts={accounts}
-                    onEdit={handleOpenForm}
-                    onDelete={handleDelete}
-                    isDeleting={deleteMutation.isPending}
-                  />
+                  {isTableLoading ? (
+                    <Skeleton className="h-64 w-full" />
+                  ) : (
+                    <ExpensesTable
+                      expenses={displayedExpenses}
+                      categories={categories}
+                      accounts={accounts}
+                      onEdit={handleOpenForm}
+                      onDelete={handleDelete}
+                      isDeleting={deleteMutation.isPending}
+                    />
+                  )}
                 </CardContent>
               </Card>
             </>

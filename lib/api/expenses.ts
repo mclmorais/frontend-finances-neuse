@@ -39,6 +39,11 @@ export async function getExpenses(): Promise<Expense[]> {
   return response.json();
 }
 
+export async function getExpensesByMonth(year: string, month: string): Promise<Expense[]> {
+  const response = await fetchWithAuth(`${API_BASE_URL}/expenses/by-month?year=${year}&month=${month}`);
+  return response.json();
+}
+
 export async function createExpense(data: CreateExpenseRequest): Promise<Expense> {
   const response = await fetchWithAuth(`${API_BASE_URL}/expenses`, {
     method: 'POST',

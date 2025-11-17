@@ -29,7 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, ArrowUpDown } from 'lucide-react';
 import type { Expense } from '@/lib/types/expense';
 import type { Category } from '@/lib/types/category';
 import type { Account } from '@/lib/types/account';
@@ -70,8 +70,20 @@ export function ExpensesTable({
   const columns: ColumnDef<Expense>[] = React.useMemo(
     () => [
       {
-        accessorKey: 'category',
-        header: 'Category',
+        id: 'category',
+        accessorFn: (row) => categoryMap.get(row.categoryId)?.name || 'Unknown',
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+              className="h-8 px-2"
+            >
+              Category
+              <ArrowUpDown className="ml-2 size-4" />
+            </Button>
+          );
+        },
         cell: ({ row }) => {
           const category = categoryMap.get(row.original.categoryId);
           if (!category) return <span className="text-muted-foreground">Unknown</span>;
@@ -92,24 +104,66 @@ export function ExpensesTable({
       },
       {
         accessorKey: 'value',
-        header: 'Value',
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+              className="h-8 px-2"
+            >
+              Value
+              <ArrowUpDown className="ml-2 size-4" />
+            </Button>
+          );
+        },
         cell: ({ row }) => {
-          const value = row.original.value;
+          const value = parseFloat(row.original.value);
           return (
             <span className="font-medium">
               R$ {value.toFixed(2).replace('.', ',')}
             </span>
           );
         },
+        sortingFn: (rowA, rowB) => {
+          const valueA = parseFloat(rowA.original.value);
+          const valueB = parseFloat(rowB.original.value);
+          return valueA - valueB;
+        },
       },
       {
         accessorKey: 'description',
-        header: 'Description',
-        cell: ({ row }) => <span>{row.original.description}</span>,
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+              className="h-8 px-2"
+            >
+              Description
+              <ArrowUpDown className="ml-2 size-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <span className={!row.original.description ? 'text-muted-foreground' : ''}>
+            {row.original.description || '—'}
+          </span>
+        ),
       },
       {
         accessorKey: 'date',
-        header: 'Date',
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+              className="h-8 px-2"
+            >
+              Date
+              <ArrowUpDown className="ml-2 size-4" />
+            </Button>
+          );
+        },
         cell: ({ row }) => {
           const date = new Date(row.original.date);
           return (
@@ -120,8 +174,20 @@ export function ExpensesTable({
         },
       },
       {
-        accessorKey: 'account',
-        header: 'Account',
+        id: 'account',
+        accessorFn: (row) => accountMap.get(row.accountId)?.name || 'Unknown',
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+              className="h-8 px-2"
+            >
+              Account
+              <ArrowUpDown className="ml-2 size-4" />
+            </Button>
+          );
+        },
         cell: ({ row }) => {
           const account = accountMap.get(row.original.accountId);
           if (!account) return <span className="text-muted-foreground">Unknown</span>;

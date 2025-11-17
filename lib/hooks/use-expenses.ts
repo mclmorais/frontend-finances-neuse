@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   getExpenses,
+  getExpensesByMonth,
   createExpense,
   updateExpense,
   deleteExpense,
@@ -22,6 +23,14 @@ export function useExpenses() {
   return useQuery({
     queryKey: expenseKeys.lists(),
     queryFn: getExpenses,
+  });
+}
+
+// Hook to fetch expenses by month
+export function useExpensesByMonth(year: string, month: string) {
+  return useQuery({
+    queryKey: expenseKeys.list({ year, month }),
+    queryFn: () => getExpensesByMonth(year, month),
   });
 }
 

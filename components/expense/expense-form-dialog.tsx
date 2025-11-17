@@ -37,7 +37,7 @@ const formSchema = z.object({
   categoryId: z.number().min(1, 'Category is required'),
   accountId: z.number().min(1, 'Account is required'),
   value: z.number().min(0.01, 'Value must be greater than 0'),
-  description: z.string().min(1, 'Description is required').max(255, 'Description is too long'),
+  description: z.string().max(255, 'Description is too long').optional().or(z.literal('')),
   date: z.string().min(1, 'Date is required'),
 });
 
@@ -73,7 +73,7 @@ export function ExpenseFormDialog({
     defaultValues: {
       categoryId: expense?.categoryId || 0,
       accountId: expense?.accountId || 0,
-      value: expense?.value || 0,
+      value: expense?.value ? parseFloat(expense.value) : 0,
       description: expense?.description || '',
       date: expense?.date ? expense.date.split('T')[0] : new Date().toISOString().split('T')[0],
     },
@@ -85,7 +85,7 @@ export function ExpenseFormDialog({
       form.reset({
         categoryId: expense?.categoryId || 0,
         accountId: expense?.accountId || 0,
-        value: expense?.value || 0,
+        value: expense?.value ? parseFloat(expense.value) : 0,
         description: expense?.description || '',
         date: expense?.date ? expense.date.split('T')[0] : new Date().toISOString().split('T')[0],
       });
