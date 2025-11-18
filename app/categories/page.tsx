@@ -1,12 +1,84 @@
 'use client';
 
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { ProtectedRoute } from '@/components/protected-route';
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FolderTree, Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
+import { CategoryCreateModal } from '@/components/category-create-modal';
+import * as LucideIcons from 'lucide-react';
+
+interface Category {
+  id: number;
+  userId: string;
+  color: string;
+  icon: string;
+  name: string;
+  type: string;
+}
 
 export default function CategoriesPage() {
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const { data: categories = [], isLoading, error } = useQuery<Category[]>({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      return apiClient.get<Category[]>('/categories');
+    },
+  });
+
+  // Ensure categories is always an array
+  const categoriesList = Array.isArray(categories) ? categories : [];
+
+  const expenseCategories = categoriesList.filter((cat) => cat.type === 'expense');
+  const savingCategories = categoriesList.filter((cat) => cat.type === 'saving');
+
+  const renderCategoryList = (categoryList: Category[], emptyMessage: string) => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      );
+    }
+
+    if (categoryList.length === 0) {
+      return (
+        <p className="text-sm text-muted-foreground py-4">
+          {emptyMessage}
+        </p>
+      );
+    }
+
+    return (
+      <div className="grid gap-2">
+        {categoryList.map((category) => {
+          const IconComponent = (LucideIcons as any)[category.icon] || LucideIcons.Circle;
+          return (
+            <div
+              key={category.id}
+              className="flex items-center gap-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors"
+            >
+              <div
+                className="flex size-10 items-center justify-center rounded-md shrink-0"
+                style={{ backgroundColor: category.color }}
+              >
+                <IconComponent className="size-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium">{category.name}</p>
+                <p className="text-xs text-muted-foreground capitalize">{category.type}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <ProtectedRoute>
       <AppLayout>
@@ -18,70 +90,52 @@ export default function CategoriesPage() {
                 Organize your transactions with custom categories
               </p>
             </div>
-            <Button>
+            <Button onClick={() => setModalOpen(true)}>
               <Plus className="mr-2 size-4" />
               Add Category
             </Button>
           </div>
 
+          {error && (
+            <Card className="border-destructive bg-destructive/10">
+              <CardContent className="pt-6">
+                <p className="text-sm text-destructive">
+                  Error loading categories: {(error as Error).message}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <div className="flex items-center gap-2">
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
-                    <FolderTree className="size-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle>Income Categories</CardTitle>
-                    <CardDescription>Categories for income transactions</CardDescription>
-                  </div>
-                </div>
+                <CardTitle>Expense Categories</CardTitle>
+                <CardDescription>Categories for expense transactions</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  No income categories created yet. Click &quot;Add Category&quot; to create your first one.
-                </p>
+                {renderCategoryList(
+                  expenseCategories,
+                  'No expense categories yet. Click "Add Category" to create one.'
+                )}
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <div className="flex items-center gap-2">
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-destructive/10">
-                    <FolderTree className="size-5 text-destructive" />
-                  </div>
-                  <div>
-                    <CardTitle>Expense Categories</CardTitle>
-                    <CardDescription>Categories for expense transactions</CardDescription>
-                  </div>
-                </div>
+                <CardTitle>Saving Categories</CardTitle>
+                <CardDescription>Categories for saving transactions</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  No expense categories created yet. Click &quot;Add Category&quot; to create your first one.
-                </p>
+                {renderCategoryList(
+                  savingCategories,
+                  'No saving categories yet. Click "Add Category" to create one.'
+                )}
               </CardContent>
             </Card>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Getting Started</CardTitle>
-              <CardDescription>Tips for organizing your categories</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Categories help you organize and analyze your financial transactions. Here are some tips:
-              </p>
-              <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                <li>Create categories that match your spending patterns</li>
-                <li>Use broad categories for better overview (e.g., &quot;Food&quot; instead of many specific ones)</li>
-                <li>You can always add more specific categories later</li>
-                <li>Common categories: Housing, Transportation, Food, Entertainment, Utilities</li>
-              </ul>
-            </CardContent>
-          </Card>
         </div>
+
+        <CategoryCreateModal open={modalOpen} onOpenChange={setModalOpen} />
       </AppLayout>
     </ProtectedRoute>
   );
