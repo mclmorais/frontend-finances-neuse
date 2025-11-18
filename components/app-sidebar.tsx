@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, FolderTree, Wallet, TrendingDown, TrendingUp, LogOut } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
+import { ThemeToggle } from "@/components/theme-toggle"
 import {
   Sidebar,
   SidebarContent,
@@ -104,6 +105,7 @@ export function AppSidebar() {
             <span className="truncate text-sm font-medium">{user.email}</span>
             <span className="text-xs text-sidebar-foreground/70">Logged in</span>
           </div>
+          <ThemeToggle />
           <Button
             variant="ghost"
             size="icon-sm"
