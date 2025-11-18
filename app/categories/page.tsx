@@ -1,14 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ProtectedRoute } from '@/components/protected-route';
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Plus, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
-import { CategoryCreateModal } from '@/components/category-create-modal';
+import { CategoryCreateForm } from '@/components/category-create-form';
 import * as LucideIcons from 'lucide-react';
 
 interface Category {
@@ -21,8 +19,6 @@ interface Category {
 }
 
 export default function CategoriesPage() {
-  const [modalOpen, setModalOpen] = useState(false);
-
   const { data: categories = [], isLoading, error } = useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: async () => {
@@ -83,18 +79,14 @@ export default function CategoriesPage() {
     <ProtectedRoute>
       <AppLayout>
         <div className="mx-auto max-w-4xl space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
-              <p className="text-muted-foreground mt-2">
-                Organize your transactions with custom categories
-              </p>
-            </div>
-            <Button onClick={() => setModalOpen(true)}>
-              <Plus className="mr-2 size-4" />
-              Add Category
-            </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
+            <p className="text-muted-foreground mt-2">
+              Organize your transactions with custom categories
+            </p>
           </div>
+
+          <CategoryCreateForm />
 
           {error && (
             <Card className="border-destructive bg-destructive/10">
@@ -134,8 +126,6 @@ export default function CategoriesPage() {
             </Card>
           </div>
         </div>
-
-        <CategoryCreateModal open={modalOpen} onOpenChange={setModalOpen} />
       </AppLayout>
     </ProtectedRoute>
   );
