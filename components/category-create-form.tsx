@@ -8,24 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { apiClient } from '@/lib/api-client';
 import { IconSelector } from '@/components/icon-selector';
+import { ColorSelector } from '@/components/color-selector';
 import { ICONS } from '@/lib/icons';
-
-const COLORS = [
-  { name: 'Red', value: '#ef4444' },
-  { name: 'Blue', value: '#3b82f6' },
-  { name: 'Green', value: '#10b981' },
-  { name: 'Amber', value: '#f59e0b' },
-  { name: 'Purple', value: '#8b5cf6' },
-  { name: 'Orange', value: '#f97316' },
-  { name: 'Pink', value: '#ec4899' },
-  { name: 'Light Red', value: '#fca5a5' },
-  { name: 'Light Blue', value: '#93c5fd' },
-  { name: 'Light Green', value: '#6ee7b7' },
-  { name: 'Light Amber', value: '#fcd34d' },
-  { name: 'Light Purple', value: '#c4b5fd' },
-  { name: 'Light Orange', value: '#fdba74' },
-  { name: 'Light Pink', value: '#f9a8d4' },
-];
+import { COLORS } from '@/lib/colors';
 
 const createCategorySchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -146,39 +131,24 @@ export function CategoryCreateForm() {
             )}
           </div>
 
-          {/* Icon Selection */}
-          <IconSelector
-            value={selectedIcon}
-            onChange={setSelectedIcon}
-            selectedColor={selectedColor}
-          />
-          {errors.icon && (
-            <p className="text-sm text-red-500">{errors.icon}</p>
-          )}
-
-          {/* Color Selection */}
-          <div className="grid gap-2">
-            <Label>Color</Label>
-            <div className="grid grid-cols-7 gap-2">
-              {COLORS.map((color) => (
-                <button
-                  key={color.value}
-                  type="button"
-                  onClick={() => setSelectedColor(color.value)}
-                  className={`w-full h-10 rounded-md transition-all ${
-                    selectedColor === color.value
-                      ? 'ring-2 ring-primary ring-offset-2 scale-110'
-                      : 'hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: color.value }}
-                  title={color.name}
-                />
-              ))}
-            </div>
-            {errors.color && (
-              <p className="text-sm text-red-500">{errors.color}</p>
-            )}
+          {/* Color & Icon Selection */}
+          <div className="flex gap-3 items-start">
+            <ColorSelector
+              value={selectedColor}
+              onChange={setSelectedColor}
+            />
+            <IconSelector
+              value={selectedIcon}
+              onChange={setSelectedIcon}
+              selectedColor={selectedColor}
+            />
           </div>
+          {(errors.color || errors.icon) && (
+            <div className="text-sm text-red-500">
+              {errors.color && <p>{errors.color}</p>}
+              {errors.icon && <p>{errors.icon}</p>}
+            </div>
+          )}
 
           {/* Submit Error */}
           {errors.submit && (
