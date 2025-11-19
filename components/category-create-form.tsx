@@ -99,37 +99,7 @@ export function CategoryCreateForm() {
             )}
           </div>
 
-          {/* Type Selection */}
-          <div className="grid gap-2">
-            <Label>Type</Label>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setType('expense')}
-                className={`flex-1 py-2 px-4 rounded-md border-2 transition-colors ${
-                  type === 'expense'
-                    ? 'border-primary bg-primary/10'
-                    : 'border-input hover:border-primary/50'
-                }`}
-              >
-                Expense
-              </button>
-              <button
-                type="button"
-                onClick={() => setType('saving')}
-                className={`flex-1 py-2 px-4 rounded-md border-2 transition-colors ${
-                  type === 'saving'
-                    ? 'border-primary bg-primary/10'
-                    : 'border-input hover:border-primary/50'
-                }`}
-              >
-                Saving
-              </button>
-            </div>
-            {errors.type && (
-              <p className="text-sm text-red-500">{errors.type}</p>
-            )}
-          </div>
+
 
           {/* Color & Icon Selection */}
           <div className="flex gap-3 items-start">
@@ -142,6 +112,36 @@ export function CategoryCreateForm() {
               onChange={setSelectedIcon}
               selectedColor={selectedColor}
             />
+
+            {/* Type Selection */}
+            <div className="grid gap-2">
+              <Label>Type</Label>
+              <div className="inline-flex p-1 bg-muted rounded-lg gap-1">
+                <button
+                  type="button"
+                  onClick={() => setType('expense')}
+                  className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${type === 'expense'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10'
+                    }`}
+                >
+                  Expense
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setType('saving')}
+                  className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${type === 'saving'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10'
+                    }`}
+                >
+                  Saving
+                </button>
+              </div>
+              {errors.type && (
+                <p className="text-sm text-red-500">{errors.type}</p>
+              )}
+            </div>
           </div>
           {(errors.color || errors.icon) && (
             <div className="text-sm text-red-500">
