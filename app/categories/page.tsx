@@ -1,12 +1,14 @@
 'use client';
 
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ProtectedRoute } from '@/components/protected-route';
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, Plus } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
-import { CategoryCreateForm } from '@/components/category-create-form';
+import { CategoryCreateModal } from '@/components/category-create-modal';
 import * as LucideIcons from 'lucide-react';
 
 interface Category {
@@ -19,6 +21,8 @@ interface Category {
 }
 
 export default function CategoriesPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const { data: categories = [], isLoading, error } = useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: async () => {
@@ -52,7 +56,7 @@ export default function CategoriesPage() {
     return (
       <div className="grid gap-2">
         {categoryList.map((category) => {
-          const IconComponent = (LucideIcons as any)[category.icon] || LucideIcons.Circle;
+          const IconComponent = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[category.icon] || LucideIcons.Circle;
           return (
             <div
               key={category.id}
@@ -79,14 +83,20 @@ export default function CategoriesPage() {
     <ProtectedRoute>
       <AppLayout>
         <div className="mx-auto max-w-4xl space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
-            <p className="text-muted-foreground mt-2">
-              Organize your transactions with custom categories
-            </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
+              <p className="text-muted-foreground mt-2">
+                Organize your transactions with custom categories
+              </p>
+            </div>
+            <Button onClick={() => setIsModalOpen(true)}>
+              <Plus className="mr-2 size-4" />
+              Add New Category
+            </Button>
           </div>
 
-          <CategoryCreateForm />
+          <CategoryCreateModal open={isModalOpen} onOpenChange={setIsModalOpen} />
 
           {error && (
             <Card className="border-destructive bg-destructive/10">
