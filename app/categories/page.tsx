@@ -22,9 +22,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
-import { CategoryCreateModal } from "@/components/category-create-modal";
+import { CategoryFormModal } from "@/components/category-form-modal";
 import * as LucideIcons from "lucide-react";
 import { toast } from "sonner";
 
@@ -42,6 +42,7 @@ export default function CategoriesPage() {
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(
     null,
   );
+  const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
   const queryClient = useQueryClient();
 
   const {
@@ -124,14 +125,24 @@ export default function CategoriesPage() {
                   {category.type}
                 </p>
               </div>
-              <Button
-                variant="destructive"
-                size="icon-sm"
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => setCategoryToDelete(category)}
-              >
-                <Trash2 className="size-4" />
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => setCategoryToEdit(category)}
+                >
+                  <Pencil className="size-4" />
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon-sm"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => setCategoryToDelete(category)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
             </div>
           );
         })}
@@ -156,9 +167,17 @@ export default function CategoriesPage() {
             </Button>
           </div>
 
-          <CategoryCreateModal
+          <CategoryFormModal
+            mode="create"
             open={isModalOpen}
             onOpenChange={setIsModalOpen}
+          />
+
+          <CategoryFormModal
+            mode="edit"
+            category={categoryToEdit}
+            open={!!categoryToEdit}
+            onOpenChange={(open) => !open && setCategoryToEdit(null)}
           />
 
           {error && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, startTransition } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import {
@@ -77,46 +77,91 @@ const ICONS = [
   { name: "CreditCard", component: CreditCard },
 ];
 
-const createCategorySchema = z.object({
+const categorySchema = z.object({
   name: z.string().min(1, "Name is required"),
   type: z.enum(["expense", "saving"]),
   color: z.string().regex(/^#([0-9a-f]{6}|[0-9a-f]{3})$/i, "Invalid color"),
   icon: z.string().min(1, "Icon is required"),
 });
 
-type CreateCategoryInput = z.infer<typeof createCategorySchema>;
+type CategoryInput = z.infer<typeof categorySchema>;
 
-interface CategoryCreateModalProps {
+interface Category {
+  id: number;
+  userId: string;
+  color: string;
+  icon: string;
+  name: string;
+  type: string;
+}
+
+interface CategoryFormModalProps {
+  mode: "create" | "edit";
+  category?: Category | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function CategoryCreateModal({
+export function CategoryFormModal({
+  mode,
+  category,
   open,
   onOpenChange,
-}: CategoryCreateModalProps) {
+}: CategoryFormModalProps) {
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [type, setType] = useState<"expense" | "saving">("expense");
   const [selectedColor, setSelectedColor] = useState(COLORS[0].value);
   const [selectedIcon, setSelectedIcon] = useState(ICONS[0].name);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const prevCategoryIdRef = useRef<number | null>(null);
+
+  // Populate form when editing - using startTransition to avoid cascading renders
+  useEffect(() => {
+    if (mode === "edit" && category && category.id !== prevCategoryIdRef.current) {
+      prevCategoryIdRef.current = category.id;
+      startTransition(() => {
+        setName(category.name);
+        setType(category.type as "expense" | "saving");
+        setSelectedColor(category.color);
+        setSelectedIcon(category.icon);
+        setErrors({});
+      });
+    }
+  }, [mode, category]);
 
   const createMutation = useMutation({
-    mutationFn: async (data: CreateCategoryInput) => {
+    mutationFn: async (data: CategoryInput) => {
       return apiClient.post("/categories", data);
     },
     onSuccess: () => {
-      // Invalidate and refetch categories
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      // Reset form
       resetForm();
-      // Close modal
       onOpenChange(false);
     },
     onError: (error: Error) => {
       console.error("Failed to create category:", error);
       setErrors({ submit: error.message || "Failed to create category" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({
+      categoryId,
+      data,
+    }: {
+      categoryId: number;
+      data: CategoryInput;
+    }) => {
+      return apiClient.patch(`/categories/${categoryId}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      onOpenChange(false);
+    },
+    onError: (error: Error) => {
+      console.error("Failed to update category:", error);
+      setErrors({ submit: error.message || "Failed to update category" });
     },
   });
 
@@ -139,7 +184,7 @@ export function CategoryCreateModal({
       icon: selectedIcon,
     };
 
-    const result = createCategorySchema.safeParse(data);
+    const result = categorySchema.safeParse(data);
 
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
@@ -152,9 +197,14 @@ export function CategoryCreateModal({
       return;
     }
 
-    createMutation.mutate(result.data);
+    if (mode === "create") {
+      createMutation.mutate(result.data);
+    } else if (mode === "edit" && category) {
+      updateMutation.mutate({ categoryId: category.id, data: result.data });
+    }
   };
 
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
   const SelectedIconComponent =
     ICONS.find((i) => i.name === selectedIcon)?.component || Wallet;
 
@@ -162,7 +212,9 @@ export function CategoryCreateModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Create New Category</DialogTitle>
+          <DialogTitle>
+            {mode === "create" ? "Create New Category" : "Edit Category"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
@@ -174,6 +226,10 @@ export function CategoryCreateModal({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Category name"
+                autoComplete="off"
+                data-1p-ignore
+                data-lpignore="true"
+                data-form-type="other"
                 className={errors.name ? "border-red-500" : ""}
               />
               {errors.name && (
@@ -287,12 +343,18 @@ export function CategoryCreateModal({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={createMutation.isPending}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Creating..." : "Create Category"}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting
+                ? mode === "create"
+                  ? "Creating..."
+                  : "Updating..."
+                : mode === "create"
+                  ? "Create Category"
+                  : "Update Category"}
             </Button>
           </DialogFooter>
         </form>
