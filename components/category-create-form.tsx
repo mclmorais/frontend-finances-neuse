@@ -1,51 +1,51 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { apiClient } from '@/lib/api-client';
-import { IconSelector } from '@/components/icon-selector';
-import { ColorSelector } from '@/components/color-selector';
-import { ICONS } from '@/lib/icons';
-import { COLORS } from '@/lib/colors';
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { apiClient } from "@/lib/api-client";
+import { IconSelector } from "@/components/icon-selector";
+import { ColorSelector } from "@/components/color-selector";
+import { ICONS } from "@/lib/icons";
+import { COLORS } from "@/lib/colors";
 
 const createCategorySchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  type: z.enum(['expense', 'saving']),
-  color: z.string().regex(/^#([0-9a-f]{6}|[0-9a-f]{3})$/i, 'Invalid color'),
-  icon: z.string().min(1, 'Icon is required'),
+  name: z.string().min(1, "Name is required"),
+  type: z.enum(["expense", "saving"]),
+  color: z.string().regex(/^#([0-9a-f]{6}|[0-9a-f]{3})$/i, "Invalid color"),
+  icon: z.string().min(1, "Icon is required"),
 });
 
 type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 
 export function CategoryCreateForm() {
   const queryClient = useQueryClient();
-  const [name, setName] = useState('');
-  const [type, setType] = useState<'expense' | 'saving'>('expense');
+  const [name, setName] = useState("");
+  const [type, setType] = useState<"expense" | "saving">("expense");
   const [selectedColor, setSelectedColor] = useState(COLORS[0].value);
   const [selectedIcon, setSelectedIcon] = useState(ICONS[0].name);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateCategoryInput) => {
-      return apiClient.post('/categories', data);
+      return apiClient.post("/categories", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
       resetForm();
     },
-    onError: (error: any) => {
-      console.error('Failed to create category:', error);
-      setErrors({ submit: error.message || 'Failed to create category' });
+    onError: (error: Error) => {
+      console.error("Failed to create category:", error);
+      setErrors({ submit: error.message || "Failed to create category" });
     },
   });
 
   const resetForm = () => {
-    setName('');
-    setType('expense');
+    setName("");
+    setType("expense");
     setSelectedColor(COLORS[0].value);
     setSelectedIcon(ICONS[0].name);
     setErrors({});
@@ -78,7 +78,6 @@ export function CategoryCreateForm() {
     createMutation.mutate(result.data);
   };
 
-
   return (
     <div className="bg-card rounded-lg border p-6">
       <h3 className="text-lg font-semibold mb-4">Add New Category</h3>
@@ -92,21 +91,16 @@ export function CategoryCreateForm() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Category name"
-              className={errors.name ? 'border-red-500' : ''}
+              className={errors.name ? "border-red-500" : ""}
             />
             {errors.name && (
               <p className="text-sm text-red-500">{errors.name}</p>
             )}
           </div>
 
-
-
           {/* Color & Icon Selection */}
           <div className="flex gap-3 items-start">
-            <ColorSelector
-              value={selectedColor}
-              onChange={setSelectedColor}
-            />
+            <ColorSelector value={selectedColor} onChange={setSelectedColor} />
             <IconSelector
               value={selectedIcon}
               onChange={setSelectedIcon}
@@ -119,21 +113,23 @@ export function CategoryCreateForm() {
               <div className="inline-flex p-1 bg-muted rounded-lg gap-1">
                 <button
                   type="button"
-                  onClick={() => setType('expense')}
-                  className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${type === 'expense'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10'
-                    }`}
+                  onClick={() => setType("expense")}
+                  className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
+                    type === "expense"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10"
+                  }`}
                 >
                   Expense
                 </button>
                 <button
                   type="button"
-                  onClick={() => setType('saving')}
-                  className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${type === 'saving'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10'
-                    }`}
+                  onClick={() => setType("saving")}
+                  className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
+                    type === "saving"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10"
+                  }`}
                 >
                   Saving
                 </button>
@@ -165,7 +161,7 @@ export function CategoryCreateForm() {
               Reset
             </Button>
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? 'Creating...' : 'Create Category'}
+              {createMutation.isPending ? "Creating..." : "Create Category"}
             </Button>
           </div>
         </div>

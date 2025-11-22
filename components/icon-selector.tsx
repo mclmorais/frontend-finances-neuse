@@ -1,12 +1,14 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Search, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ICONS } from '@/lib/icons';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ICONS } from "@/lib/icons";
 
 interface IconSelectorProps {
   value: string;
@@ -14,7 +16,11 @@ interface IconSelectorProps {
   selectedColor: string;
 }
 
-export function IconSelector({ value, onChange, selectedColor }: IconSelectorProps) {
+export function IconSelector({
+  value,
+  onChange,
+  selectedColor,
+}: IconSelectorProps) {
   const [open, setOpen] = useState(false);
 
   const selectedIcon = ICONS.find((icon) => icon.name === value);
@@ -43,7 +49,6 @@ export function IconSelector({ value, onChange, selectedColor }: IconSelectorPro
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[400px] p-0" align="start">
-
           <div className="p-4">
             <>
               <div className="grid grid-cols-6 gap-2 max-h-[300px] overflow-y-auto">
@@ -54,10 +59,11 @@ export function IconSelector({ value, onChange, selectedColor }: IconSelectorPro
                       key={icon.name}
                       type="button"
                       onClick={() => handleSelect(icon.name)}
-                      className={`p-2.5 rounded-md transition-colors hover:bg-accent flex items-center justify-center ${value === icon.name
-                        ? 'bg-primary/20 border-2 border-primary'
-                        : 'border border-transparent'
-                        }`}
+                      className={`p-2.5 rounded-md transition-colors hover:bg-accent flex items-center justify-center ${
+                        value === icon.name
+                          ? "bg-primary/20 border-2 border-primary"
+                          : "border border-transparent"
+                      }`}
                       title={icon.name}
                     >
                       <IconComponent className="h-7 w-7" />
@@ -65,7 +71,6 @@ export function IconSelector({ value, onChange, selectedColor }: IconSelectorPro
                   );
                 })}
               </div>
-
             </>
           </div>
         </PopoverContent>
