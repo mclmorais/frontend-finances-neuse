@@ -1,4 +1,5 @@
 import { createClient } from "./supabase/client";
+import { z } from "zod";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -10,6 +11,16 @@ export class ApiError extends Error {
   ) {
     super(`API Error ${status}: ${statusText}`);
     this.name = "ApiError";
+  }
+}
+
+export class ValidationError extends Error {
+  constructor(
+    public issues: z.ZodIssue[],
+    public data: unknown,
+  ) {
+    super(`Validation Error: ${issues.map((i) => i.message).join(", ")}`);
+    this.name = "ValidationError";
   }
 }
 
@@ -27,16 +38,17 @@ async function getAuthToken(): Promise<string> {
   return session.access_token;
 }
 
-interface RequestOptions {
+interface RequestOptions<T extends z.ZodType> {
   method?: string;
   headers?: HeadersInit;
   body?: unknown;
+  schema?: T;
 }
 
-async function apiRequest<T>(
+async function apiRequest<T extends z.ZodType>(
   endpoint: string,
-  options: RequestOptions = {},
-): Promise<T> {
+  options: RequestOptions<T>,
+): Promise<z.infer<T>> {
   const token = await getAuthToken();
 
   const headers: Record<string, string> = {
@@ -71,23 +83,50 @@ async function apiRequest<T>(
 
   // Handle empty responses
   const contentType = response.headers.get("content-type");
+  let data: unknown;
+
   if (contentType && contentType.includes("application/json")) {
-    return response.json();
+    data = await response.json();
+  } else {
+    data = {};
   }
 
-  return {} as T;
+  // Validate with Zod schema if provided
+  if (options.schema) {
+    const result = options.schema.safeParse(data);
+    if (!result.success) {
+      throw new ValidationError(result.error.issues, data);
+    }
+    return result.data;
+  }
+
+  return data as z.infer<T>;
 }
 
 export const apiClient = {
-  get: <T>(endpoint: string, options?: RequestOptions) =>
-    apiRequest<T>(endpoint, { ...options, method: "GET" }),
+  get: <T extends z.ZodType>(
+    endpoint: string,
+    schema: T,
+    options?: Omit<RequestOptions<T>, "schema" | "method">,
+  ) => apiRequest<T>(endpoint, { ...options, method: "GET", schema }),
 
-  post: <T>(endpoint: string, body?: unknown, options?: RequestOptions) =>
-    apiRequest<T>(endpoint, { ...options, method: "POST", body }),
+  post: <T extends z.ZodType>(
+    endpoint: string,
+    schema: T,
+    body?: unknown,
+    options?: Omit<RequestOptions<T>, "schema" | "method" | "body">,
+  ) => apiRequest<T>(endpoint, { ...options, method: "POST", body, schema }),
 
-  patch: <T>(endpoint: string, body?: unknown, options?: RequestOptions) =>
-    apiRequest<T>(endpoint, { ...options, method: "PATCH", body }),
+  patch: <T extends z.ZodType>(
+    endpoint: string,
+    schema: T,
+    body?: unknown,
+    options?: Omit<RequestOptions<T>, "schema" | "method" | "body">,
+  ) => apiRequest<T>(endpoint, { ...options, method: "PATCH", body, schema }),
 
-  delete: <T>(endpoint: string, options?: RequestOptions) =>
-    apiRequest<T>(endpoint, { ...options, method: "DELETE" }),
+  delete: <T extends z.ZodType>(
+    endpoint: string,
+    schema: T,
+    options?: Omit<RequestOptions<T>, "schema" | "method">,
+  ) => apiRequest<T>(endpoint, { ...options, method: "DELETE", schema }),
 };
