@@ -12,7 +12,7 @@ import { parseExpenseInput, ParsedExpense } from "@/lib/nlp-expense-parser";
 import { apiClient } from "@/lib/api-client";
 import { expenseSchema as expenseResponseSchema } from "@/lib/api-schemas";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, parse as dateParse } from "date-fns";
 import * as LucideIcons from "lucide-react";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -96,7 +96,9 @@ export function NaturalExpenseInput({
     const { amount, date, categoryId, accountId, description } = parsed;
 
     if (!amount || !date || !categoryId || !accountId) {
-      toast.error("Please provide all required fields: amount, category, and account");
+      toast.error(
+        "Please provide all required fields: amount, category, and account",
+      );
       return;
     }
 
@@ -180,7 +182,10 @@ export function NaturalExpenseInput({
               <Badge variant="secondary">
                 <span className="text-xs">Date:</span>
                 <span className="ml-1 font-medium">
-                  {format(new Date(parsed.date), "MMM dd, yyyy")}
+                  {format(
+                    dateParse(parsed.date, "yyyy-MM-dd", new Date()),
+                    "MMM dd, yyyy",
+                  )}
                 </span>
               </Badge>
             )}

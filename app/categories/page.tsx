@@ -61,9 +61,11 @@ export default function CategoriesPage() {
     mutationFn: async (categoryId: number) => {
       return apiClient.delete(`/categories/${categoryId}`, emptyResponseSchema);
     },
-    onSuccess: (deletedCategory) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      toast.success(`Category "${deletedCategory.name}" deleted successfully`);
+      toast.success(
+        `Category "${categoryToDelete?.name}" deleted successfully`,
+      );
       setCategoryToDelete(null);
     },
     onError: (error: Error) => {
