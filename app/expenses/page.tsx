@@ -28,6 +28,7 @@ import { ExpenseFormModal } from "@/components/expense-form-modal";
 import { ExpensesTable } from "@/components/expenses-table";
 import { MonthNavigation } from "@/components/month-navigation";
 import { CategorySpendingChart } from "@/components/category-spending-chart";
+import { NaturalExpenseInput } from "@/components/natural-expense-input";
 import { Expense, Category, Account } from "@/lib/types";
 import {
   expensesSchema,
@@ -148,6 +149,9 @@ export default function ExpensesPage() {
               Add Expense
             </Button>
           </div>
+
+          {/* Natural Language Expense Input */}
+          <NaturalExpenseInput categories={categories} accounts={accounts} />
 
           {/* Category Spending Chart */}
           <CategorySpendingChart
