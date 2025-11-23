@@ -165,7 +165,7 @@ export function CategorySpendingChart({
             <BarChart
               data={chartData}
               layout="vertical"
-              margin={{ left: 0, right: 40, top: 5, bottom: 5 }}
+              margin={{ left: 150, right: 40, top: 5, bottom: 5 }}
               barSize={32}
               barGap={4}
             >
@@ -231,8 +231,7 @@ export function CategorySpendingChart({
               <Bar dataKey="totalValue" radius={4}>
                 <LabelList
                   dataKey="categoryName"
-                  position="insideLeft"
-                  content={({ x, y, width, height, value, index }) => {
+                  content={({ x, y, height, value, index }) => {
                     const category = chartData[index as number];
                     if (!category) return null;
 
@@ -243,21 +242,21 @@ export function CategorySpendingChart({
                     return (
                       <g>
                         <foreignObject
-                          x={(x as number) + 8}
+                          x={(x as number) - 150}
                           y={(y as number) + (height as number) / 2 - 12}
-                          width={(width as number) - 16}
+                          width={140}
                           height={24}
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 justify-end">
                             <div
                               className="flex items-center justify-center rounded-full w-5 h-5 flex-shrink-0"
                               style={{
-                                backgroundColor: "rgba(255, 255, 255, 0.3)",
+                                backgroundColor: category.categoryColor,
                               }}
                             >
                               <IconComponent className="w-3 h-3 text-white" />
                             </div>
-                            <span className="text-sm font-medium text-white truncate">
+                            <span className="text-sm font-medium text-foreground truncate">
                               {value}
                             </span>
                           </div>
