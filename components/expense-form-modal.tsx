@@ -29,6 +29,11 @@ import {
 } from "@/components/ui/popover";
 import { apiClient } from "@/lib/api-client";
 import { Expense, Category, Account } from "@/lib/types";
+import {
+  expenseSchema as expenseResponseSchema,
+  accountsSchema,
+  categoriesSchema,
+} from "@/lib/api-schemas";
 import { format } from "date-fns";
 import { CalendarIcon, Wallet, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -80,18 +85,18 @@ export function ExpenseFormModal({
   const prevExpenseIdRef = useRef<number | null>(null);
 
   // Fetch accounts
-  const { data: accounts = [] } = useQuery<Account[]>({
+  const { data: accounts = [] } = useQuery({
     queryKey: ["accounts"],
     queryFn: async () => {
-      return apiClient.get<Account[]>("/accounts");
+      return apiClient.get("/accounts", accountsSchema);
     },
   });
 
   // Fetch categories (only expense type)
-  const { data: allCategories = [] } = useQuery<Category[]>({
+  const { data: allCategories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      return apiClient.get<Category[]>("/categories");
+      return apiClient.get("/categories", categoriesSchema);
     },
   });
 
@@ -114,7 +119,7 @@ export function ExpenseFormModal({
 
   const createMutation = useMutation({
     mutationFn: async (data: ExpenseInput) => {
-      return apiClient.post("/expenses", data);
+      return apiClient.post("/expenses", expenseResponseSchema, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
@@ -135,7 +140,11 @@ export function ExpenseFormModal({
       expenseId: number;
       data: ExpenseInput;
     }) => {
-      return apiClient.patch(`/expenses/${expenseId}`, data);
+      return apiClient.patch(
+        `/expenses/${expenseId}`,
+        expenseResponseSchema,
+        data,
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });

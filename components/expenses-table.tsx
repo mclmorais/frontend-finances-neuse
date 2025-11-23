@@ -25,16 +25,70 @@ import {
   Trash2,
   ArrowUpDown,
   Wallet,
+  ShoppingCart,
+  Home,
+  Car,
+  Coffee,
+  Utensils,
+  Plane,
+  Heart,
+  Shirt,
+  Gamepad2,
+  GraduationCap,
+  Stethoscope,
+  DollarSign,
+  Gift,
+  Music,
+  Film,
+  Dumbbell,
+  PiggyBank,
+  TrendingUp,
+  CreditCard,
   type LucideIcon,
 } from "lucide-react";
 import { Expense, Category, Account } from "@/lib/types";
-import * as LucideIcons from "lucide-react";
 import { format } from "date-fns";
+
+// Icon mapping for dynamic lookup
+const ICON_MAP: Record<string, LucideIcon> = {
+  Wallet,
+  ShoppingCart,
+  Home,
+  Car,
+  Coffee,
+  Utensils,
+  Plane,
+  Heart,
+  Shirt,
+  Gamepad2,
+  GraduationCap,
+  Stethoscope,
+  DollarSign,
+  Gift,
+  Music,
+  Film,
+  Dumbbell,
+  PiggyBank,
+  TrendingUp,
+  CreditCard,
+};
 
 // Helper function to safely get icon component
 const getIconComponent = (iconName: string): LucideIcon => {
-  const icon = (LucideIcons as Record<string, unknown>)[iconName];
-  return (typeof icon === "function" ? icon : Wallet) as LucideIcon;
+  if (!iconName) return Wallet;
+
+  // Try to get icon from the map
+  const icon = ICON_MAP[iconName];
+
+  // If not found, log for debugging and use fallback
+  if (!icon) {
+    console.warn(
+      `Icon "${iconName}" not found in ICON_MAP, using Wallet as fallback`,
+    );
+    return Wallet;
+  }
+
+  return icon;
 };
 
 interface ExpensesTableProps {
@@ -167,18 +221,10 @@ export function ExpensesTable({
         const expense = row.original;
         return (
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onEdit(expense)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => onEdit(expense)}>
               <Pencil className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(expense)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => onDelete(expense)}>
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>

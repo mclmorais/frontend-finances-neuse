@@ -6,6 +6,7 @@ export const categorySchema = z.object({
   name: z.string(),
   icon: z.string(),
   color: z.string(),
+  type: z.string(), // "expense" or "saving"
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -29,7 +30,7 @@ export const expenseSchema = z.object({
   id: z.number(),
   date: z.string(),
   description: z.string().nullable(),
-  value: z.number(),
+  value: z.coerce.number(), // Coerce string to number (API may return decimal as string)
   categoryId: z.number(),
   accountId: z.number(),
   createdAt: z.string().optional(),
@@ -37,6 +38,9 @@ export const expenseSchema = z.object({
 });
 
 export const expensesSchema = z.array(expenseSchema);
+
+// Empty response schema (for DELETE operations)
+export const emptyResponseSchema = z.object({});
 
 // Type exports
 export type Category = z.infer<typeof categorySchema>;

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiClient } from "@/lib/api-client";
+import { categorySchema as categoryResponseSchema } from "@/lib/api-schemas";
 import {
   Wallet,
   ShoppingCart,
@@ -118,7 +119,11 @@ export function CategoryFormModal({
 
   // Populate form when editing - using startTransition to avoid cascading renders
   useEffect(() => {
-    if (mode === "edit" && category && category.id !== prevCategoryIdRef.current) {
+    if (
+      mode === "edit" &&
+      category &&
+      category.id !== prevCategoryIdRef.current
+    ) {
       prevCategoryIdRef.current = category.id;
       startTransition(() => {
         setName(category.name);
@@ -132,7 +137,7 @@ export function CategoryFormModal({
 
   const createMutation = useMutation({
     mutationFn: async (data: CategoryInput) => {
-      return apiClient.post("/categories", data);
+      return apiClient.post("/categories", categoryResponseSchema, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
@@ -153,7 +158,11 @@ export function CategoryFormModal({
       categoryId: number;
       data: CategoryInput;
     }) => {
-      return apiClient.patch(`/categories/${categoryId}`, data);
+      return apiClient.patch(
+        `/categories/${categoryId}`,
+        categoryResponseSchema,
+        data,
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });

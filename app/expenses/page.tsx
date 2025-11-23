@@ -28,6 +28,12 @@ import { ExpenseFormModal } from "@/components/expense-form-modal";
 import { ExpensesTable } from "@/components/expenses-table";
 import { MonthNavigation } from "@/components/month-navigation";
 import { Expense, Category, Account } from "@/lib/types";
+import {
+  expensesSchema,
+  categoriesSchema,
+  accountsSchema,
+  emptyResponseSchema,
+} from "@/lib/api-schemas";
 import { toast } from "sonner";
 import { format, startOfMonth } from "date-fns";
 
@@ -48,32 +54,33 @@ export default function ExpensesPage() {
     data: expenses = [],
     isLoading: expensesLoading,
     error: expensesError,
-  } = useQuery<Expense[]>({
+  } = useQuery({
     queryKey: ["expenses", "monthly", year, month],
     queryFn: async () => {
-      return apiClient.get<Expense[]>(
+      return apiClient.get(
         `/expenses/monthly?year=${year}&month=${month}`,
+        expensesSchema,
       );
     },
   });
 
-  const { data: categories = [] } = useQuery<Category[]>({
+  const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      return apiClient.get<Category[]>("/categories");
+      return apiClient.get("/categories", categoriesSchema);
     },
   });
 
-  const { data: accounts = [] } = useQuery<Account[]>({
+  const { data: accounts = [] } = useQuery({
     queryKey: ["accounts"],
     queryFn: async () => {
-      return apiClient.get<Account[]>("/accounts");
+      return apiClient.get("/accounts", accountsSchema);
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (expenseId: number) => {
-      return apiClient.delete<Expense>(`/expenses/${expenseId}`);
+      return apiClient.delete(`/expenses/${expenseId}`, emptyResponseSchema);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses", "monthly"] });

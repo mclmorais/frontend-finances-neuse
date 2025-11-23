@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiClient } from "@/lib/api-client";
+import { categorySchema as categoryResponseSchema } from "@/lib/api-schemas";
 import { IconSelector } from "@/components/icon-selector";
 import { ColorSelector } from "@/components/color-selector";
 import { ICONS } from "@/lib/icons";
@@ -31,7 +32,7 @@ export function CategoryCreateForm() {
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateCategoryInput) => {
-      return apiClient.post("/categories", data);
+      return apiClient.post("/categories", categoryResponseSchema, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });

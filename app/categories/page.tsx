@@ -27,6 +27,7 @@ import { apiClient } from "@/lib/api-client";
 import { CategoryFormModal } from "@/components/category-form-modal";
 import * as LucideIcons from "lucide-react";
 import { toast } from "sonner";
+import { categoriesSchema, emptyResponseSchema } from "@/lib/api-schemas";
 
 interface Category {
   id: number;
@@ -49,16 +50,16 @@ export default function CategoriesPage() {
     data: categories = [],
     isLoading,
     error,
-  } = useQuery<Category[]>({
+  } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      return apiClient.get<Category[]>("/categories");
+      return apiClient.get("/categories", categoriesSchema);
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (categoryId: number) => {
-      return apiClient.delete<Category>(`/categories/${categoryId}`);
+      return apiClient.delete(`/categories/${categoryId}`, emptyResponseSchema);
     },
     onSuccess: (deletedCategory) => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });

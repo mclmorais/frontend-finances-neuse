@@ -27,6 +27,7 @@ import { apiClient } from "@/lib/api-client";
 import { AccountFormModal } from "@/components/account-form-modal";
 import * as LucideIcons from "lucide-react";
 import { toast } from "sonner";
+import { accountsSchema, emptyResponseSchema } from "@/lib/api-schemas";
 
 interface Account {
   id: number;
@@ -46,16 +47,16 @@ export default function AccountsPage() {
     data: accounts = [],
     isLoading,
     error,
-  } = useQuery<Account[]>({
+  } = useQuery({
     queryKey: ["accounts"],
     queryFn: async () => {
-      return apiClient.get<Account[]>("/accounts");
+      return apiClient.get("/accounts", accountsSchema);
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (accountId: number) => {
-      return apiClient.delete<Account>(`/accounts/${accountId}`);
+      return apiClient.delete(`/accounts/${accountId}`, emptyResponseSchema);
     },
     onSuccess: (deletedAccount) => {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });

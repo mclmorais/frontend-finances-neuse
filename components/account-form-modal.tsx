@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiClient } from "@/lib/api-client";
+import { accountSchema as accountResponseSchema } from "@/lib/api-schemas";
 import {
   Wallet,
   ShoppingCart,
@@ -128,7 +129,7 @@ export function AccountFormModal({
 
   const createMutation = useMutation({
     mutationFn: async (data: AccountInput) => {
-      return apiClient.post("/accounts", data);
+      return apiClient.post("/accounts", accountResponseSchema, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
@@ -149,7 +150,11 @@ export function AccountFormModal({
       accountId: number;
       data: AccountInput;
     }) => {
-      return apiClient.patch(`/accounts/${accountId}`, data);
+      return apiClient.patch(
+        `/accounts/${accountId}`,
+        accountResponseSchema,
+        data,
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
