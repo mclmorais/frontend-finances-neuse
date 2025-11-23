@@ -27,12 +27,14 @@ import { apiClient } from "@/lib/api-client";
 import { ExpenseFormModal } from "@/components/expense-form-modal";
 import { ExpensesTable } from "@/components/expenses-table";
 import { MonthNavigation } from "@/components/month-navigation";
+import { CategorySpendingChart } from "@/components/category-spending-chart";
 import { Expense, Category, Account } from "@/lib/types";
 import {
   expensesSchema,
   categoriesSchema,
   accountsSchema,
   emptyResponseSchema,
+  monthlySummarySchema,
 } from "@/lib/api-schemas";
 import { toast } from "sonner";
 import { format, startOfMonth } from "date-fns";
@@ -75,6 +77,16 @@ export default function ExpensesPage() {
     queryKey: ["accounts"],
     queryFn: async () => {
       return apiClient.get("/accounts", accountsSchema);
+    },
+  });
+
+  const { data: monthlySummary = [], isLoading: summaryLoading } = useQuery({
+    queryKey: ["expenses", "monthly", "summary", year, month],
+    queryFn: async () => {
+      return apiClient.get(
+        `/expenses/monthly/summary?year=${year}&month=${month}`,
+        monthlySummarySchema,
+      );
     },
   });
 
@@ -136,6 +148,12 @@ export default function ExpensesPage() {
               Add Expense
             </Button>
           </div>
+
+          {/* Category Spending Chart */}
+          <CategorySpendingChart
+            data={monthlySummary}
+            isLoading={summaryLoading}
+          />
 
           <Card>
             <CardHeader>

@@ -39,6 +39,18 @@ export const expenseSchema = z.object({
 
 export const expensesSchema = z.array(expenseSchema);
 
+// Category summary schema (for monthly spending breakdown)
+export const categorySummarySchema = z.object({
+  categoryId: z.number(),
+  categoryName: z.string(),
+  categoryIcon: z.string(),
+  categoryColor: z.string(),
+  totalValue: z.coerce.number(), // Coerce string to number
+  expenseCount: z.number(),
+});
+
+export const monthlySummarySchema = z.array(categorySummarySchema);
+
 // Empty response schema (for DELETE operations)
 export const emptyResponseSchema = z.object({});
 
@@ -46,3 +58,4 @@ export const emptyResponseSchema = z.object({});
 export type Category = z.infer<typeof categorySchema>;
 export type Account = z.infer<typeof accountSchema>;
 export type Expense = z.infer<typeof expenseSchema>;
+export type CategorySummary = z.infer<typeof categorySummarySchema>;
