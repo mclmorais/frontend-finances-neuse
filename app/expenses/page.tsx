@@ -26,23 +26,34 @@ import { Loader2, Plus } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { ExpenseFormModal } from "@/components/expense-form-modal";
 import { ExpensesTable } from "@/components/expenses-table";
+import { MonthNavigation } from "@/components/month-navigation";
 import { Expense, Category, Account } from "@/lib/types";
 import { toast } from "sonner";
+import { format, startOfMonth } from "date-fns";
 
 export default function ExpensesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<Date>(() =>
+    startOfMonth(new Date()),
+  );
   const queryClient = useQueryClient();
+
+  // Extract year and month from selectedMonth for API call
+  const year = selectedMonth.getFullYear();
+  const month = selectedMonth.getMonth() + 1; // JavaScript months are 0-indexed, API expects 1-indexed
 
   const {
     data: expenses = [],
     isLoading: expensesLoading,
     error: expensesError,
   } = useQuery<Expense[]>({
-    queryKey: ["expenses"],
+    queryKey: ["expenses", "monthly", year, month],
     queryFn: async () => {
-      return apiClient.get<Expense[]>("/expenses");
+      return apiClient.get<Expense[]>(
+        `/expenses/monthly?year=${year}&month=${month}`,
+      );
     },
   });
 
@@ -65,7 +76,7 @@ export default function ExpensesPage() {
       return apiClient.delete<Expense>(`/expenses/${expenseId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["expenses", "monthly"] });
       toast.success("Expense deleted successfully");
       setExpenseToDelete(null);
     },
@@ -121,10 +132,19 @@ export default function ExpensesPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>All Expenses</CardTitle>
-              <CardDescription>Your expense transactions</CardDescription>
+              <CardTitle>Monthly Expenses</CardTitle>
+              <CardDescription>
+                Expenses for {format(selectedMonth, "MMMM yyyy")}
+              </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Month Navigation Bar */}
+              <div className="mb-6">
+                <MonthNavigation
+                  selectedMonth={selectedMonth}
+                  onMonthChange={setSelectedMonth}
+                />
+              </div>
               {expensesLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="size-6 animate-spin text-muted-foreground" />
