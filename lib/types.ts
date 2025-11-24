@@ -24,7 +24,7 @@ export interface Expense {
   categoryId: number;
   date: string;
   description: string | null;
-  value: string;
+  value: number; // API returns as number (coerced from string)
 }
 
 export interface CreateExpenseInput {

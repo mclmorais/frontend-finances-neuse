@@ -58,14 +58,19 @@ export default function CategoriesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (categoryId: number) => {
-      return apiClient.delete(`/categories/${categoryId}`, emptyResponseSchema);
+    mutationFn: async ({
+      categoryId,
+      categoryName,
+    }: {
+      categoryId: number;
+      categoryName: string;
+    }) => {
+      await apiClient.delete(`/categories/${categoryId}`, emptyResponseSchema);
+      return { categoryName };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      toast.success(
-        `Category "${categoryToDelete?.name}" deleted successfully`,
-      );
+      toast.success(`Category "${data.categoryName}" deleted successfully`);
       setCategoryToDelete(null);
     },
     onError: (error: Error) => {
@@ -250,7 +255,11 @@ export default function CategoriesPage() {
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={() =>
-                  categoryToDelete && deleteMutation.mutate(categoryToDelete.id)
+                  categoryToDelete &&
+                  deleteMutation.mutate({
+                    categoryId: categoryToDelete.id,
+                    categoryName: categoryToDelete.name,
+                  })
                 }
                 disabled={deleteMutation.isPending}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

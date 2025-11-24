@@ -34,7 +34,7 @@ import {
   accountsSchema,
   categoriesSchema,
 } from "@/lib/api-schemas";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { CalendarIcon, Wallet, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import * as LucideIcons from "lucide-react";
@@ -109,8 +109,10 @@ export function ExpenseFormModal({
       startTransition(() => {
         setAccountId(expense.accountId);
         setCategoryId(expense.categoryId);
-        setDate(new Date(expense.date));
-        setValue(expense.value);
+        // Parse date string as local date to avoid timezone shift
+        setDate(parse(expense.date, "yyyy-MM-dd", new Date()));
+        // Convert number to string for form input
+        setValue(expense.value.toString());
         setDescription(expense.description || "");
         setErrors({});
       });

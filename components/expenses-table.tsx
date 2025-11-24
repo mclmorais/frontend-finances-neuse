@@ -47,7 +47,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Expense, Category, Account } from "@/lib/types";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 
 // Icon mapping for dynamic lookup
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -131,7 +131,8 @@ export function ExpensesTable({
         );
       },
       cell: ({ row }) => {
-        const date = new Date(row.getValue("date"));
+        const dateString = row.getValue("date") as string;
+        const date = parse(dateString, "yyyy-MM-dd", new Date());
         return (
           <div className="font-medium">{format(date, "MMM dd, yyyy")}</div>
         );
