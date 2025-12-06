@@ -2,7 +2,6 @@
 
 export interface Category {
   id: number;
-  userId: string;
   color: string;
   icon: string;
   name: string;
@@ -11,7 +10,6 @@ export interface Category {
 
 export interface Account {
   id: number;
-  userId: string;
   color: string;
   icon: string;
   name: string;
@@ -19,7 +17,6 @@ export interface Account {
 
 export interface Expense {
   id: number;
-  userId: string;
   accountId: number;
   categoryId: number;
   date: string;

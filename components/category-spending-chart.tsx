@@ -268,13 +268,13 @@ export function CategorySpendingChart({
                 <LabelList
                   dataKey="totalValue"
                   position="right"
-                  formatter={(value: number) =>
+                  formatter={(value) =>
                     new Intl.NumberFormat("en-US", {
                       style: "currency",
                       currency: "USD",
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
-                    }).format(value)
+                    }).format(Number(value) || 0)
                   }
                   className="fill-foreground text-xs"
                 />

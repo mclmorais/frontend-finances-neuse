@@ -14,7 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiClient } from "@/lib/api-client";
-import { categorySchema as categoryResponseSchema } from "@/lib/api-schemas";
+import {
+  categorySchema as categoryResponseSchema,
+  Category,
+} from "@/lib/api-schemas";
 import {
   Wallet,
   ShoppingCart,
@@ -86,15 +89,6 @@ const categorySchema = z.object({
 });
 
 type CategoryInput = z.infer<typeof categorySchema>;
-
-interface Category {
-  id: number;
-  userId: string;
-  color: string;
-  icon: string;
-  name: string;
-  type: string;
-}
 
 interface CategoryFormModalProps {
   mode: "create" | "edit";

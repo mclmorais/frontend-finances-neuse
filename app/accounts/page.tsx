@@ -27,15 +27,11 @@ import { apiClient } from "@/lib/api-client";
 import { AccountFormModal } from "@/components/account-form-modal";
 import * as LucideIcons from "lucide-react";
 import { toast } from "sonner";
-import { accountsSchema, emptyResponseSchema } from "@/lib/api-schemas";
-
-interface Account {
-  id: number;
-  userId: string;
-  color: string;
-  icon: string;
-  name: string;
-}
+import {
+  accountsSchema,
+  emptyResponseSchema,
+  Account,
+} from "@/lib/api-schemas";
 
 export default function AccountsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);

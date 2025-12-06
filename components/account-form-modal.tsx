@@ -14,7 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiClient } from "@/lib/api-client";
-import { accountSchema as accountResponseSchema } from "@/lib/api-schemas";
+import {
+  accountSchema as accountResponseSchema,
+  Account,
+} from "@/lib/api-schemas";
 import {
   Wallet,
   ShoppingCart,
@@ -85,14 +88,6 @@ const accountSchema = z.object({
 });
 
 type AccountInput = z.infer<typeof accountSchema>;
-
-interface Account {
-  id: number;
-  userId: string;
-  color: string;
-  icon: string;
-  name: string;
-}
 
 interface AccountFormModalProps {
   mode: "create" | "edit";

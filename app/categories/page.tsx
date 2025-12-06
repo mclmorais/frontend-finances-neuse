@@ -27,16 +27,11 @@ import { apiClient } from "@/lib/api-client";
 import { CategoryFormModal } from "@/components/category-form-modal";
 import * as LucideIcons from "lucide-react";
 import { toast } from "sonner";
-import { categoriesSchema, emptyResponseSchema } from "@/lib/api-schemas";
-
-interface Category {
-  id: number;
-  userId: string;
-  color: string;
-  icon: string;
-  name: string;
-  type: string;
-}
+import {
+  categoriesSchema,
+  emptyResponseSchema,
+  Category,
+} from "@/lib/api-schemas";
 
 export default function CategoriesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);

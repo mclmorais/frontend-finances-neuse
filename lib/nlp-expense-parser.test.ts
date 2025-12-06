@@ -276,7 +276,6 @@ describe("parseExpenseInput", () => {
   const mockCategories: Category[] = [
     {
       id: 1,
-      userId: "user1",
       name: "Food",
       color: "#FF5733",
       icon: "🍔",
@@ -284,7 +283,6 @@ describe("parseExpenseInput", () => {
     },
     {
       id: 2,
-      userId: "user1",
       name: "Transport",
       color: "#33FF57",
       icon: "🚗",
@@ -292,7 +290,6 @@ describe("parseExpenseInput", () => {
     },
     {
       id: 3,
-      userId: "user1",
       name: "Entertainment",
       color: "#3357FF",
       icon: "🎬",
@@ -300,7 +297,6 @@ describe("parseExpenseInput", () => {
     },
     {
       id: 4,
-      userId: "user1",
       name: "Groceries",
       color: "#F3FF33",
       icon: "🛒",
@@ -308,7 +304,6 @@ describe("parseExpenseInput", () => {
     },
     {
       id: 5,
-      userId: "user1",
       name: "Healthcare",
       color: "#FF33F3",
       icon: "💊",
@@ -319,28 +314,24 @@ describe("parseExpenseInput", () => {
   const mockAccounts: Account[] = [
     {
       id: 1,
-      userId: "user1",
       name: "Cash",
       color: "#00FF00",
       icon: "💵",
     },
     {
       id: 2,
-      userId: "user1",
       name: "Credit Card",
       color: "#0000FF",
       icon: "💳",
     },
     {
       id: 3,
-      userId: "user1",
       name: "Debit Card",
       color: "#FF0000",
       icon: "💳",
     },
     {
       id: 4,
-      userId: "user1",
       name: "Bank Account",
       color: "#FFFF00",
       icon: "🏦",
@@ -904,7 +895,6 @@ describe("parseExpenseInput", () => {
       const brazilCategories: Category[] = [
         {
           id: 1,
-          userId: "user1",
           name: "Alimentação",
           color: "#FF5733",
           icon: "🍔",
@@ -912,7 +902,6 @@ describe("parseExpenseInput", () => {
         },
         {
           id: 2,
-          userId: "user1",
           name: "Transporte",
           color: "#33FF57",
           icon: "🚗",
@@ -923,14 +912,12 @@ describe("parseExpenseInput", () => {
       const brazilAccounts: Account[] = [
         {
           id: 1,
-          userId: "user1",
           name: "Nubank Crédito",
           color: "#8B10AE",
           icon: "💳",
         },
         {
           id: 2,
-          userId: "user1",
           name: "Nubank Débito",
           color: "#8B10AE",
           icon: "💳",
