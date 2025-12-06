@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Scatter,
-  ScatterChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Scatter, ScatterChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   Card,
   CardContent,
@@ -121,8 +115,8 @@ const CustomCategoryTick = (props: any) => {
   const IconComponent = getIconComponent(foundCategory.icon);
 
   return (
-    <g transform={`translate(${x},${y})`}>
-      <foreignObject x={-140} y={-12} width={130} height={24}>
+    <g>
+      <foreignObject x={x - 150} y={y - 12} width={130} height={24}>
         <div className="flex items-center gap-2 justify-end">
           <div
             className="flex items-center justify-center rounded-full w-5 h-5 flex-shrink-0"
@@ -170,10 +164,14 @@ const CustomTooltip = ({ active, payload }: any) => {
         <div className="flex justify-between gap-4">
           <span className="text-muted-foreground">Date:</span>
           <span className="font-medium">
-            {new Date(data.dateString).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })}
+            {(() => {
+              const [year, month, day] = data.dateString.split("-").map(Number);
+              const date = new Date(year, month - 1, day);
+              return date.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              });
+            })()}
           </span>
         </div>
         {data.description && (
@@ -285,7 +283,10 @@ export function ExpenseTimelineChart({
   }, [expenses, categories]);
 
   // Calculate total spending
-  const totalSpending = expenses.reduce((sum, expense) => sum + expense.value, 0);
+  const totalSpending = expenses.reduce(
+    (sum, expense) => sum + expense.value,
+    0,
+  );
 
   // Create chart config
   const chartConfig: ChartConfig = useMemo(() => {
@@ -333,9 +334,10 @@ export function ExpenseTimelineChart({
     );
   }
 
-  // Calculate Y-axis domain
+  // Calculate Y-axis domain and ticks
   const categoryCount = categoryMap.size;
   const yDomain = [-0.5, categoryCount - 0.5];
+  const yTicks = Array.from({ length: categoryCount }, (_, i) => i);
 
   return (
     <Card>
@@ -353,7 +355,7 @@ export function ExpenseTimelineChart({
         <div style={{ height: `${chartHeight}px` }}>
           <ChartContainer config={chartConfig} className="h-full aspect-auto">
             <ScatterChart
-              margin={{ top: 20, right: 60, bottom: 20, left: 150 }}
+              margin={{ top: 20, right: 20, bottom: 20, left: 10 }}
             >
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -377,18 +379,18 @@ export function ExpenseTimelineChart({
                 type="number"
                 dataKey="categoryId"
                 domain={yDomain}
+                ticks={yTicks}
                 tick={<CustomCategoryTick categoryMap={categoryMap} />}
                 tickLine={false}
                 axisLine={false}
                 width={140}
               />
-              <ChartTooltip
-                cursor={false}
-                content={<CustomTooltip />}
-              />
+              <ChartTooltip cursor={false} content={<CustomTooltip />} />
               <Scatter
                 data={timelineData}
-                shape={(props: any) => <CustomBubble {...props} maxValue={maxValue} />}
+                shape={(props: any) => (
+                  <CustomBubble {...props} maxValue={maxValue} />
+                )}
               />
             </ScatterChart>
           </ChartContainer>
