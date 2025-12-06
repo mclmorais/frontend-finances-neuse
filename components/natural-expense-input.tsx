@@ -132,7 +132,7 @@ export function NaturalExpenseInput({
         <div className="flex gap-2">
           <div className="flex-1 relative">
             <Input
-              placeholder='Try: "Lunch yesterday Alimentação Crédito 25"'
+              placeholder='Try: "Almoço ontem Alimentação Crédito $22,50"'
               value={input}
               onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={(e) => {

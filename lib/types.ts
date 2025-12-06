@@ -39,3 +39,17 @@ export interface UpdateExpenseInput {
   description?: string;
   value?: string;
 }
+
+export type ChartView = "bar" | "timeline" | "none";
+
+export interface TimelineDataPoint {
+  date: number; // Day of month (1-31)
+  categoryId: number; // Y-axis position
+  categoryName: string;
+  categoryColor: string;
+  categoryIcon: string;
+  expenseId: number;
+  value: number; // Bubble size
+  description: string | null;
+  dateString: string; // Original date
+}

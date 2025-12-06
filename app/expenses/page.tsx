@@ -28,8 +28,9 @@ import { ExpenseFormModal } from "@/components/expense-form-modal";
 import { ExpensesTable } from "@/components/expenses-table";
 import { MonthNavigation } from "@/components/month-navigation";
 import { CategorySpendingChart } from "@/components/category-spending-chart";
+import { ExpenseTimelineChart } from "@/components/expense-timeline-chart";
 import { NaturalExpenseInput } from "@/components/natural-expense-input";
-import { Expense, Category, Account } from "@/lib/types";
+import { Expense, Category, Account, ChartView } from "@/lib/types";
 import {
   expensesSchema,
   categoriesSchema,
@@ -47,6 +48,7 @@ export default function ExpensesPage() {
   const [selectedMonth, setSelectedMonth] = useState<Date>(() =>
     startOfMonth(new Date()),
   );
+  const [chartView, setChartView] = useState<ChartView>("bar");
   const queryClient = useQueryClient();
 
   // Extract year and month from selectedMonth for API call
@@ -153,11 +155,44 @@ export default function ExpensesPage() {
           {/* Natural Language Expense Input */}
           <NaturalExpenseInput categories={categories} accounts={accounts} />
 
-          {/* Category Spending Chart */}
-          <CategorySpendingChart
-            data={monthlySummary}
-            isLoading={summaryLoading}
-          />
+          {/* Chart View Toggle */}
+          <div className="flex justify-end gap-2">
+            <Button
+              variant={chartView === "bar" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartView("bar")}
+            >
+              Bar Chart
+            </Button>
+            <Button
+              variant={chartView === "timeline" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartView("timeline")}
+            >
+              Timeline
+            </Button>
+            <Button
+              variant={chartView === "none" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartView("none")}
+            >
+              None
+            </Button>
+          </div>
+
+          {/* Spending Visualization */}
+          {chartView === "bar" ? (
+            <CategorySpendingChart
+              data={monthlySummary}
+              isLoading={summaryLoading}
+            />
+          ) : chartView === "timeline" ? (
+            <ExpenseTimelineChart
+              expenses={expenses}
+              categories={categories}
+              isLoading={expensesLoading}
+            />
+          ) : null}
 
           <Card>
             <CardHeader>

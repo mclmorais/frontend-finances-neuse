@@ -247,7 +247,7 @@ export function ExpensesTable({
     },
     initialState: {
       pagination: {
-        pageSize: 10,
+        pageSize: 50,
       },
     },
   });
