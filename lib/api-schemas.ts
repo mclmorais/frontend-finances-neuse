@@ -51,6 +51,26 @@ export const categorySummarySchema = z.object({
 
 export const monthlySummarySchema = z.array(categorySummarySchema);
 
+// Income schema
+export const incomeSchema = z.object({
+  id: z.number(),
+  date: z.string(),
+  description: z.string().nullable(),
+  value: z.coerce.number(), // Coerce string to number (API may return decimal as string)
+  accountId: z.number(),
+  userId: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export const incomesSchema = z.array(incomeSchema);
+
+// Income monthly summary schema
+export const incomeMonthlySummarySchema = z.object({
+  totalIncome: z.coerce.number(), // Coerce string to number
+  incomeCount: z.number(),
+});
+
 // Empty response schema (for DELETE operations)
 export const emptyResponseSchema = z.object({});
 
@@ -59,3 +79,5 @@ export type Category = z.infer<typeof categorySchema>;
 export type Account = z.infer<typeof accountSchema>;
 export type Expense = z.infer<typeof expenseSchema>;
 export type CategorySummary = z.infer<typeof categorySummarySchema>;
+export type Income = z.infer<typeof incomeSchema>;
+export type IncomeMonthlySummary = z.infer<typeof incomeMonthlySummarySchema>;

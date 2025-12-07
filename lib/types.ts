@@ -40,6 +40,33 @@ export interface UpdateExpenseInput {
   value?: string;
 }
 
+export interface Income {
+  id: number;
+  accountId: number;
+  date: string; // YYYY-MM-DD
+  description: string | null;
+  value: number; // API returns as number (coerced from string)
+}
+
+export interface CreateIncomeInput {
+  accountId: number;
+  date: string; // Format: YYYY-MM-DD
+  description?: string;
+  value: string; // Decimal string (e.g., "10.50")
+}
+
+export interface UpdateIncomeInput {
+  accountId?: number;
+  date?: string;
+  description?: string;
+  value?: string;
+}
+
+export interface IncomeMonthlySummary {
+  totalIncome: number;
+  incomeCount: number;
+}
+
 export type ChartView = "bar" | "timeline" | "none";
 
 export interface TimelineDataPoint {
