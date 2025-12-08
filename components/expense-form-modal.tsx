@@ -125,6 +125,7 @@ export function ExpenseFormModal({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["reports", "monthly-comparison"] });
       resetForm();
       onOpenChange(false);
     },
@@ -150,6 +151,7 @@ export function ExpenseFormModal({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["reports", "monthly-comparison"] });
       onOpenChange(false);
     },
     onError: (error: Error) => {

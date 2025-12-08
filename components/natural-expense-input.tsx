@@ -67,6 +67,7 @@ export function NaturalExpenseInput({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["reports", "monthly-comparison"] });
       toast.success("Expense created successfully");
       handleClear();
     },

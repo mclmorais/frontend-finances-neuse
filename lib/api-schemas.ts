@@ -71,6 +71,17 @@ export const incomeMonthlySummarySchema = z.object({
   incomeCount: z.number(),
 });
 
+// Monthly comparison schema (income vs expenses)
+export const monthlyComparisonSchema = z.object({
+  year: z.number(),
+  month: z.number(),
+  totalIncome: z.coerce.number(),
+  totalExpenses: z.coerce.number(),
+  netBalance: z.coerce.number(),
+  incomeCount: z.number(),
+  expenseCount: z.number(),
+});
+
 // Empty response schema (for DELETE operations)
 export const emptyResponseSchema = z.object({});
 
@@ -81,3 +92,4 @@ export type Expense = z.infer<typeof expenseSchema>;
 export type CategorySummary = z.infer<typeof categorySummarySchema>;
 export type Income = z.infer<typeof incomeSchema>;
 export type IncomeMonthlySummary = z.infer<typeof incomeMonthlySummarySchema>;
+export type MonthlyComparison = z.infer<typeof monthlyComparisonSchema>;

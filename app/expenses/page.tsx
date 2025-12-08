@@ -30,6 +30,7 @@ import { MonthNavigation } from "@/components/month-navigation";
 import { CategorySpendingChart } from "@/components/category-spending-chart";
 import { ExpenseTimelineChart } from "@/components/expense-timeline-chart";
 import { NaturalExpenseInput } from "@/components/natural-expense-input";
+import { MonthlyComparisonCard } from "@/components/monthly-comparison-card";
 import { Expense, Category, Account, ChartView } from "@/lib/types";
 import {
   expensesSchema,
@@ -37,6 +38,7 @@ import {
   accountsSchema,
   emptyResponseSchema,
   monthlySummarySchema,
+  monthlyComparisonSchema,
 } from "@/lib/api-schemas";
 import { toast } from "sonner";
 import { format, startOfMonth } from "date-fns";
@@ -93,12 +95,26 @@ export default function ExpensesPage() {
     },
   });
 
+  const {
+    data: monthlyComparison,
+    isLoading: comparisonLoading,
+  } = useQuery({
+    queryKey: ["reports", "monthly-comparison", year, month],
+    queryFn: async () => {
+      return apiClient.get(
+        `/reports/monthly-comparison?year=${year}&month=${month}`,
+        monthlyComparisonSchema,
+      );
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (expenseId: number) => {
       return apiClient.delete(`/expenses/${expenseId}`, emptyResponseSchema);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses", "monthly"] });
+      queryClient.invalidateQueries({ queryKey: ["reports", "monthly-comparison"] });
       toast.success("Expense deleted successfully");
       setExpenseToDelete(null);
     },
@@ -193,6 +209,15 @@ export default function ExpensesPage() {
               isLoading={expensesLoading}
             />
           ) : null}
+
+          {/* Income vs Expenses Comparison */}
+          {monthlyComparison && (
+            <MonthlyComparisonCard
+              comparison={monthlyComparison}
+              isLoading={comparisonLoading}
+              selectedMonth={selectedMonth}
+            />
+          )}
 
           <Card>
             <CardHeader>
