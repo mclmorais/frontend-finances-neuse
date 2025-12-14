@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, FolderTree, Wallet, TrendingDown, TrendingUp, LogOut } from "lucide-react"
+import { Home, FolderTree, Wallet, TrendingDown, TrendingUp, PiggyBank, LogOut } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { ThemeToggle } from "@/components/theme-toggle"
 import {
@@ -43,6 +43,11 @@ const navigationItems = [
     title: "Incomes",
     href: "/incomes",
     icon: TrendingUp,
+  },
+  {
+    title: "Budgets",
+    href: "/budgets",
+    icon: PiggyBank,
   },
 ]
 

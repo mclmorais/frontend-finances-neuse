@@ -85,6 +85,45 @@ export const monthlyComparisonSchema = z.object({
 // Empty response schema (for DELETE operations)
 export const emptyResponseSchema = z.object({});
 
+// Budget schema
+export const budgetSchema = z.object({
+  id: z.number(),
+  userId: z.string().optional(),
+  accountId: z.number(),
+  categoryId: z.number(),
+  date: z.string(), // YYYY-MM-01 format
+  value: z.coerce.number(), // Coerce string to number
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export const budgetsSchema = z.array(budgetSchema);
+
+// Batch create output schema
+export const budgetOutputItemSchema = z.object({
+  id: z.number().int(),
+  userId: z.string(),
+  accountId: z.number().int(),
+  categoryId: z.number().int(),
+  date: z.string(),
+  value: z.string(),
+});
+
+export const batchCreateBudgetsOutputSchema = z.object({
+  created: z.array(budgetOutputItemSchema),
+  errors: z.array(
+    z.object({
+      budget: z.object({
+        accountId: z.number().int(),
+        categoryId: z.number().int(),
+        date: z.string(),
+        value: z.string(),
+      }),
+      error: z.string(),
+    })
+  ),
+});
+
 // Type exports
 export type Category = z.infer<typeof categorySchema>;
 export type Account = z.infer<typeof accountSchema>;
@@ -93,3 +132,6 @@ export type CategorySummary = z.infer<typeof categorySummarySchema>;
 export type Income = z.infer<typeof incomeSchema>;
 export type IncomeMonthlySummary = z.infer<typeof incomeMonthlySummarySchema>;
 export type MonthlyComparison = z.infer<typeof monthlyComparisonSchema>;
+export type Budget = z.infer<typeof budgetSchema>;
+export type BudgetOutputItem = z.infer<typeof budgetOutputItemSchema>;
+export type BatchCreateBudgetsOutput = z.infer<typeof batchCreateBudgetsOutputSchema>;
