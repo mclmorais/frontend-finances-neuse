@@ -39,6 +39,7 @@ import {
   emptyResponseSchema,
   monthlySummarySchema,
   monthlyComparisonSchema,
+  budgetsSchema,
 } from "@/lib/api-schemas";
 import { toast } from "sonner";
 import { format, startOfMonth } from "date-fns";
@@ -104,6 +105,16 @@ export default function ExpensesPage() {
       return apiClient.get(
         `/reports/monthly-comparison?year=${year}&month=${month}`,
         monthlyComparisonSchema,
+      );
+    },
+  });
+
+  const { data: monthlyBudgets = [] } = useQuery({
+    queryKey: ["budgets", "monthly", year, month],
+    queryFn: async () => {
+      return apiClient.get(
+        `/budgets/monthly?year=${year}&month=${month}`,
+        budgetsSchema,
       );
     },
   });
@@ -200,6 +211,7 @@ export default function ExpensesPage() {
           {chartView === "bar" ? (
             <CategorySpendingChart
               data={monthlySummary}
+              budgets={monthlyBudgets}
               isLoading={summaryLoading}
             />
           ) : chartView === "timeline" ? (

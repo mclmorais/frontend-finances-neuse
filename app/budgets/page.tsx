@@ -96,6 +96,7 @@ export default function BudgetsPage() {
   } = useQuery({
     queryKey: ["budgets", "monthly", year, month],
     queryFn: async () => {
+      console.log(`Fetching budgets for ${year}-${month}`);
       return apiClient.get(
         `/budgets/monthly?year=${year}&month=${month}`,
         budgetsSchema
@@ -105,14 +106,24 @@ export default function BudgetsPage() {
 
   // Initialize budget allocations from existing budgets
   useEffect(() => {
+    if (budgetsLoading) return; // Wait for budgets to finish loading
+
+    console.log('Loading existing budgets:', existingBudgets);
     const allocations = new Map<string, string>();
     existingBudgets.forEach((budget: Budget) => {
       const key = `${budget.accountId}-${budget.categoryId}`;
-      allocations.set(key, budget.value.toString());
+      // Ensure value is converted to string properly
+      const valueStr = typeof budget.value === 'number'
+        ? budget.value.toString()
+        : String(budget.value || '');
+
+      console.log(`Budget ${key}: ${valueStr}`);
+      allocations.set(key, valueStr);
     });
+    console.log('Budget allocations map:', allocations);
     setBudgetAllocations(allocations);
     setHasUnsavedChanges(false);
-  }, [existingBudgets]);
+  }, [existingBudgets, budgetsLoading]);
 
   // Auto-select first account on load
   useEffect(() => {

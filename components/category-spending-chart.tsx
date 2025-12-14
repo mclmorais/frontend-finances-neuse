@@ -7,6 +7,7 @@ import {
   XAxis,
   YAxis,
   LabelList,
+  Cell,
 } from "recharts";
 import {
   Card,
@@ -21,7 +22,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { CategorySummary } from "@/lib/api-schemas";
+import { CategorySummary, Budget } from "@/lib/api-schemas";
 import {
   Wallet,
   ShoppingCart,
@@ -76,11 +77,24 @@ const getIconComponent = (iconName: string): LucideIcon => {
 
 interface CategorySpendingChartProps {
   data: CategorySummary[];
+  budgets?: Budget[];
   isLoading?: boolean;
+}
+
+interface EnrichedCategoryData extends CategorySummary {
+  fill: string;
+  spent: number;
+  remaining: number;
+  overBudget: number;
+  budget: number;
+  hasBudget: boolean;
+  utilization: number;
+  labelHelper: number;
 }
 
 export function CategorySpendingChart({
   data,
+  budgets = [],
   isLoading = false,
 }: CategorySpendingChartProps) {
   // Sort data by totalValue descending
@@ -92,11 +106,34 @@ export function CategorySpendingChart({
     0,
   );
 
-  // Prepare chart data with category colors
-  const chartData = sortedData.map((item) => ({
-    ...item,
-    fill: item.categoryColor,
-  }));
+  // Enrich data with budget information
+  const chartData: EnrichedCategoryData[] = sortedData.map((item) => {
+    // Sum all budgets for this category across accounts
+    const categoryBudget = budgets
+      .filter((b) => b.categoryId === item.categoryId)
+      .reduce((sum, b) => sum + b.value, 0);
+
+    const spent = item.totalValue;
+    const hasBudget = categoryBudget > 0;
+
+    // Calculate components for stacked bar
+    const withinBudget = hasBudget ? Math.min(spent, categoryBudget) : spent;
+    const remaining = hasBudget ? Math.max(0, categoryBudget - spent) : 0;
+    const overBudget = hasBudget ? Math.max(0, spent - categoryBudget) : 0;
+
+    return {
+      ...item,
+      fill: item.categoryColor,
+      spent: withinBudget,
+      remaining,
+      overBudget,
+      budget: categoryBudget,
+      hasBudget,
+      utilization: hasBudget ? (spent / categoryBudget) * 100 : 0,
+      // Add a dummy field for labels that always has a tiny value
+      labelHelper: 0.01,
+    };
+  });
 
   // Create chart config
   const chartConfig: ChartConfig = sortedData.reduce((config, item) => {
@@ -144,19 +181,28 @@ export function CategorySpendingChart({
   // Calculate dynamic height based on number of categories
   const chartHeight = Math.max(150, sortedData.length * 40 + 40);
 
-  // Calculate max domain value (soft maximum of 1000)
-  const maxValue = Math.max(...sortedData.map((item) => item.totalValue), 1000);
+  // Calculate max domain value accounting for budgets
+  const maxValue = Math.max(
+    ...chartData.map((item) =>
+      Math.max(item.totalValue, item.budget)
+    ),
+    1000,
+  );
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Spending by Category</CardTitle>
         <CardDescription>
-          Total:{" "}
-          {new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-          }).format(totalSpending)}
+          Total: {formatCurrency(totalSpending)}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -165,7 +211,7 @@ export function CategorySpendingChart({
             <BarChart
               data={chartData}
               layout="vertical"
-              margin={{ left: 150, right: 40, top: 5, bottom: 5 }}
+              margin={{ left: 150, right: 100, top: 5, bottom: 5 }}
               barSize={32}
               barGap={4}
             >
@@ -189,7 +235,7 @@ export function CategorySpendingChart({
                 content={({ active, payload }) => {
                   if (!active || !payload || !payload.length) return null;
 
-                  const data = payload[0].payload as CategorySummary;
+                  const data = payload[0].payload as EnrichedCategoryData;
                   const IconComponent = getIconComponent(data.categoryIcon);
 
                   return (
@@ -207,14 +253,43 @@ export function CategorySpendingChart({
                       </div>
                       <div className="space-y-1 text-sm">
                         <div className="flex justify-between gap-4">
-                          <span className="text-muted-foreground">Amount:</span>
+                          <span className="text-muted-foreground">Spent:</span>
                           <span className="font-medium">
-                            {new Intl.NumberFormat("en-US", {
-                              style: "currency",
-                              currency: "USD",
-                            }).format(data.totalValue)}
+                            {formatCurrency(data.totalValue)}
                           </span>
                         </div>
+                        {data.hasBudget && (
+                          <>
+                            <div className="flex justify-between gap-4">
+                              <span className="text-muted-foreground">Budget:</span>
+                              <span className="font-medium">
+                                {formatCurrency(data.budget)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between gap-4">
+                              <span className="text-muted-foreground">
+                                {data.overBudget > 0 ? "Over:" : "Remaining:"}
+                              </span>
+                              <span
+                                className={`font-medium ${
+                                  data.overBudget > 0
+                                    ? "text-red-500"
+                                    : "text-green-600"
+                                }`}
+                              >
+                                {formatCurrency(
+                                  data.overBudget > 0 ? data.overBudget : data.remaining
+                                )}
+                              </span>
+                            </div>
+                            <div className="flex justify-between gap-4">
+                              <span className="text-muted-foreground">Used:</span>
+                              <span className="font-medium">
+                                {Math.round(data.utilization)}%
+                              </span>
+                            </div>
+                          </>
+                        )}
                         <div className="flex justify-between gap-4">
                           <span className="text-muted-foreground">
                             Expenses:
@@ -228,10 +303,61 @@ export function CategorySpendingChart({
                   );
                 }}
               />
-              <Bar dataKey="totalValue" radius={4}>
+
+              {/* Spent bar (bright color) */}
+              <Bar
+                dataKey="spent"
+                stackId="a"
+                radius={[0, 0, 0, 0]}
+              >
+                {chartData.map((entry, index) => (
+                  <Cell
+                    key={`spent-${index}`}
+                    fill={entry.categoryColor}
+                  />
+                ))}
+              </Bar>
+
+              {/* Remaining budget bar (light/outline) */}
+              <Bar
+                dataKey="remaining"
+                stackId="a"
+                radius={[0, 0, 0, 0]}
+              >
+                {chartData.map((entry, index) => (
+                  <Cell
+                    key={`remaining-${index}`}
+                    fill={`${entry.categoryColor}20`}
+                    stroke={entry.categoryColor}
+                    strokeWidth={entry.hasBudget && entry.remaining > 0 ? 1 : 0}
+                  />
+                ))}
+              </Bar>
+
+              {/* Over-budget bar (red) */}
+              <Bar
+                dataKey="overBudget"
+                stackId="a"
+                radius={[0, 4, 4, 0]}
+              >
+                {chartData.map((entry, index) => (
+                  <Cell
+                    key={`over-${index}`}
+                    fill="#ef4444"
+                  />
+                ))}
+              </Bar>
+
+              {/* Invisible helper bar for labels - always renders */}
+              <Bar
+                dataKey="labelHelper"
+                stackId="a"
+                fill="transparent"
+              >
+                {/* Category name labels */}
                 <LabelList
                   dataKey="categoryName"
-                  content={({ x, y, height, value, index }) => {
+                  content={({ y, height, value, index }) => {
                     const category = chartData[index as number];
                     if (!category) return null;
 
@@ -242,7 +368,7 @@ export function CategorySpendingChart({
                     return (
                       <g>
                         <foreignObject
-                          x={(x as number) - 150}
+                          x={0}
                           y={(y as number) + (height as number) / 2 - 12}
                           width={140}
                           height={24}
@@ -265,18 +391,55 @@ export function CategorySpendingChart({
                     );
                   }}
                 />
+                {/* Value labels */}
                 <LabelList
-                  dataKey="totalValue"
                   position="right"
-                  formatter={(value) =>
-                    new Intl.NumberFormat("en-US", {
-                      style: "currency",
-                      currency: "USD",
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }).format(Number(value) || 0)
-                  }
-                  className="fill-foreground text-xs"
+                  content={({ y, height, index }) => {
+                    const category = chartData[index as number];
+                    if (!category) return null;
+
+                    const yPos = (y as number) + (height as number) / 2;
+
+                    // Calculate the x position based on the total width of all stacked bars
+                    const totalWidth = category.spent + category.remaining + category.overBudget;
+                    const xPos = totalWidth + 5;
+
+                    if (category.hasBudget) {
+                      // Show: "$500 / $800 (62%)"
+                      const percentage = Math.round(category.utilization);
+                      const color =
+                        category.overBudget > 0
+                          ? "#ef4444"
+                          : percentage >= 90
+                          ? "#eab308"
+                          : "#22c55e";
+
+                      return (
+                        <text
+                          x={xPos}
+                          y={yPos}
+                          fill={color}
+                          className="text-xs font-medium"
+                          dominantBaseline="middle"
+                        >
+                          {formatCurrency(category.totalValue)} /{" "}
+                          {formatCurrency(category.budget)} ({percentage}%)
+                        </text>
+                      );
+                    } else {
+                      // Show: "$500"
+                      return (
+                        <text
+                          x={xPos}
+                          y={yPos}
+                          className="fill-foreground text-xs"
+                          dominantBaseline="middle"
+                        >
+                          {formatCurrency(category.totalValue)}
+                        </text>
+                      );
+                    }
+                  }}
                 />
               </Bar>
             </BarChart>
