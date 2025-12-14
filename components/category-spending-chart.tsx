@@ -20,7 +20,6 @@ import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
 } from "@/components/ui/chart";
 import { CategorySummary, Budget } from "@/lib/api-schemas";
 import {
