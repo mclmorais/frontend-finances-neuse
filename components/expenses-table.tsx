@@ -24,6 +24,8 @@ import {
   Pencil,
   Trash2,
   ArrowUpDown,
+  ArrowDownToLine,
+  ArrowUpFromLine,
   Wallet,
   ShoppingCart,
   Home,
@@ -158,16 +160,36 @@ export function ExpensesTable({
         if (!category) return <div>—</div>;
 
         const IconComponent = getIconComponent(category.icon);
+        const expense = row.original;
+        const savingsType = expense.savingsType;
 
         return (
-          <div
-            className="inline-flex items-center gap-2 rounded-full px-3 py-1.5"
-            style={{ backgroundColor: category.color }}
-          >
-            <IconComponent className="w-4 h-4 text-white" />
-            <span className="text-sm font-medium text-white">
-              {category.name}
-            </span>
+          <div className="flex items-center gap-2">
+            <div
+              className="inline-flex items-center gap-2 rounded-full px-3 py-1.5"
+              style={{ backgroundColor: category.color }}
+            >
+              <IconComponent className="w-4 h-4 text-white" />
+              <span className="text-sm font-medium text-white">
+                {category.name}
+              </span>
+            </div>
+            {savingsType && (
+              <div
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
+                  savingsType === "deposit"
+                    ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                    : "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300"
+                }`}
+              >
+                {savingsType === "deposit" ? (
+                  <ArrowDownToLine className="w-3 h-3" />
+                ) : (
+                  <ArrowUpFromLine className="w-3 h-3" />
+                )}
+                {savingsType === "deposit" ? "Deposit" : "Withdrawal"}
+              </div>
+            )}
           </div>
         );
       },

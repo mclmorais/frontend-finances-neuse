@@ -58,9 +58,11 @@ const expenseSchema = z.object({
       "Value must be a valid decimal number (e.g., 10.50)",
     ),
   description: z.string().optional(),
+  savingsType: z.enum(["deposit", "withdrawal"]).optional(),
 });
 
 type ExpenseInput = z.infer<typeof expenseSchema>;
+type SavingsType = "deposit" | "withdrawal" | null;
 
 interface ExpenseFormModalProps {
   mode: "create" | "edit";
@@ -81,6 +83,7 @@ export function ExpenseFormModal({
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [value, setValue] = useState("");
   const [description, setDescription] = useState("");
+  const [savingsType, setSavingsType] = useState<SavingsType>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const prevExpenseIdRef = useRef<number | null>(null);
 
@@ -100,7 +103,16 @@ export function ExpenseFormModal({
     },
   });
 
-  const categories = allCategories.filter((cat) => cat.type === "expense");
+  // Include both expense and saving categories
+  const categories = allCategories.filter(
+    (cat) => cat.type === "expense" || cat.type === "saving"
+  );
+
+  // Check if selected category is a savings category
+  const selectedCategory = categoryId
+    ? allCategories.find((cat) => cat.id === categoryId)
+    : null;
+  const isSavingsCategory = selectedCategory?.type === "saving";
 
   // Populate form when editing
   useEffect(() => {
@@ -114,10 +126,18 @@ export function ExpenseFormModal({
         // Convert number to string for form input
         setValue(expense.value.toString());
         setDescription(expense.description || "");
+        setSavingsType(expense.savingsType ?? null);
         setErrors({});
       });
     }
   }, [mode, expense]);
+
+  // Reset savingsType when category changes to non-savings
+  useEffect(() => {
+    if (!isSavingsCategory) {
+      setSavingsType(null);
+    }
+  }, [isSavingsCategory]);
 
   const createMutation = useMutation({
     mutationFn: async (data: ExpenseInput) => {
@@ -166,6 +186,7 @@ export function ExpenseFormModal({
     setDate(new Date());
     setValue("");
     setDescription("");
+    setSavingsType(null);
     setErrors({});
   };
 
@@ -173,12 +194,19 @@ export function ExpenseFormModal({
     e.preventDefault();
     setErrors({});
 
+    // Validate savingsType for savings categories
+    if (isSavingsCategory && !savingsType) {
+      setErrors({ savingsType: "Please select deposit or withdrawal" });
+      return;
+    }
+
     const data = {
       accountId: accountId!,
       categoryId: categoryId!,
       date: date ? format(date, "yyyy-MM-dd") : "",
       value,
       description: description || undefined,
+      savingsType: isSavingsCategory ? savingsType ?? undefined : undefined,
     };
 
     const result = expenseSchema.safeParse(data);
@@ -295,6 +323,34 @@ export function ExpenseFormModal({
                 <p className="text-sm text-red-500">{errors.categoryId}</p>
               )}
             </div>
+
+            {/* Savings Type Selection - Only shown for savings categories */}
+            {isSavingsCategory && (
+              <div className="grid gap-2">
+                <Label>Transaction Type</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={savingsType === "deposit" ? "default" : "outline"}
+                    className="flex-1"
+                    onClick={() => setSavingsType("deposit")}
+                  >
+                    Deposit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={savingsType === "withdrawal" ? "default" : "outline"}
+                    className="flex-1"
+                    onClick={() => setSavingsType("withdrawal")}
+                  >
+                    Withdrawal
+                  </Button>
+                </div>
+                {errors.savingsType && (
+                  <p className="text-sm text-red-500">{errors.savingsType}</p>
+                )}
+              </div>
+            )}
 
             {/* Date Picker */}
             <div className="grid gap-2">

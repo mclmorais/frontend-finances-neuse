@@ -22,6 +22,7 @@ export interface Expense {
   date: string;
   description: string | null;
   value: number; // API returns as number (coerced from string)
+  savingsType?: "deposit" | "withdrawal" | null;
 }
 
 export interface CreateExpenseInput {
@@ -30,6 +31,7 @@ export interface CreateExpenseInput {
   date: string; // Format: YYYY-MM-DD
   description?: string;
   value: string; // Decimal string (e.g., "10.50")
+  savingsType?: "deposit" | "withdrawal";
 }
 
 export interface UpdateExpenseInput {
@@ -38,6 +40,7 @@ export interface UpdateExpenseInput {
   date?: string;
   description?: string;
   value?: string;
+  savingsType?: "deposit" | "withdrawal" | null;
 }
 
 export interface Income {

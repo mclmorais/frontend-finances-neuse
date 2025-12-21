@@ -33,6 +33,7 @@ export const expenseSchema = z.object({
   value: z.coerce.number(), // Coerce string to number (API may return decimal as string)
   categoryId: z.number(),
   accountId: z.number(),
+  savingsType: z.enum(["deposit", "withdrawal"]).nullable().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
