@@ -88,7 +88,7 @@ export default function ExpensesPage() {
 
   const { data: categorySpending = [] } = useQuery({
     queryKey: ["categories", "spending", year, month],
-    queryFn: () => apiClient.get(`/reports/monthly-categories-budget-comparison?year=${year}&month=${month}`, categoryReportsSchema)
+    queryFn: () => apiClient.get(`/reports/monthly-categories-budget-comparison?year=${year}&month=${month}&categoryType=expense`, categoryReportsSchema)
   })
 
   const { data: monthlySummary = [], isLoading: summaryLoading } = useQuery({

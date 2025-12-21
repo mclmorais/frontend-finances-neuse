@@ -38,9 +38,13 @@ function CustomYAxisTick({ x = 0, y = 0, payload, dataMap }: CustomYAxisTickProp
 }
 
 export function CategorySpendingBarChart({data}: CategorySpendingBarChartProps) {
-    const dataMap = useMemo(() => {
-        return new Map(data.map(item => [item.categoryName, item]));
+    const sortedData = useMemo(() => {
+        return [...data].sort((a, b) => b.budget - a.budget);
     }, [data]);
+
+    const dataMap = useMemo(() => {
+        return new Map(sortedData.map(item => [item.categoryName, item]));
+    }, [sortedData]);
 
     return (
         <Card>
@@ -48,7 +52,7 @@ export function CategorySpendingBarChart({data}: CategorySpendingBarChartProps) 
                 <CardTitle>Spending by Category</CardTitle>
             </CardHeader>
             <ChartContainer config={{}}>
-                <BarChart layout='vertical' data={data} margin={{ left: 30, right: 50, top: 5, bottom: 5 }}>
+                <BarChart layout='vertical' data={sortedData} margin={{ left: 30, right: 50, top: 5, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                     <XAxis type="number" />
                     <YAxis 
@@ -58,7 +62,7 @@ export function CategorySpendingBarChart({data}: CategorySpendingBarChartProps) 
                         tick={(props) => <CustomYAxisTick {...props} dataMap={dataMap} />}
                     />
                     <Bar dataKey="delta" stackId="a" isAnimationActive={true}>
-                        {data.map((c,i) => {
+                        {sortedData.map((c,i) => {
                             return <Cell key={`delta-${i}`} fill={c.categoryColor} />;
                         })}
                     </Bar>
@@ -68,7 +72,7 @@ export function CategorySpendingBarChart({data}: CategorySpendingBarChartProps) 
                         isAnimationActive={true}
                         label={(props: LabelProps) => {
                             const { x = 0, y = 0, width = 0, height = 0, index = 0 } = props;
-                            const item = data[index];
+                            const item = sortedData[index];
                             return (
                                 <text
                                     x={(x as number) + (width as number) + 5}
@@ -81,7 +85,7 @@ export function CategorySpendingBarChart({data}: CategorySpendingBarChartProps) 
                             );
                         }}
                     >
-                        {data.map((c,i) => <Cell key={`category-${i}`} fill="var(--muted-bar)"/>)}
+                        {sortedData.map((c,i) => <Cell key={`category-${i}`} fill="var(--muted-bar)"/>)}
                     </Bar>
 
                 </BarChart>
