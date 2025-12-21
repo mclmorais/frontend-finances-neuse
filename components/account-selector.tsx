@@ -79,7 +79,7 @@ export function AccountSelector({
           msOverflowStyle: "none",
         }}
       >
-        <div className="flex gap-4 pb-1">
+        <div className="flex gap-4 p-2">
           {accounts.map((account) => {
             const IconComponent = LucideIcons[account.icon as keyof typeof LucideIcons] as React.ComponentType<{ className?: string }>;
             const income = incomesByAccount.get(account.id) || 0;
