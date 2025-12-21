@@ -19,6 +19,7 @@ interface BudgetAllocationFormProps {
   budgetAllocations: Map<string, string>;
   onUpdateBudget: (accountId: number, categoryId: number, value: string) => void;
   validationErrors: Map<string, string>;
+  carryoverByAccountCategory: Map<string, number>;
 }
 
 export function BudgetAllocationForm({
@@ -28,6 +29,7 @@ export function BudgetAllocationForm({
   budgetAllocations,
   onUpdateBudget,
   validationErrors,
+  carryoverByAccountCategory,
 }: BudgetAllocationFormProps) {
   // Split categories by type
   const expenseCategories = useMemo(
@@ -137,6 +139,7 @@ export function BudgetAllocationForm({
                 const key = `${selectedAccount.id}-${category.id}`;
                 const value = budgetAllocations.get(key) || "";
                 const error = validationErrors.get(key);
+                const carryover = carryoverByAccountCategory.get(key) || 0;
 
                 return (
                   <CategoryBudgetInput
@@ -148,6 +151,7 @@ export function BudgetAllocationForm({
                     }
                     max={availableIncome}
                     error={error}
+                    carryover={carryover}
                   />
                 );
               })}
@@ -169,6 +173,7 @@ export function BudgetAllocationForm({
                 const key = `${selectedAccount.id}-${category.id}`;
                 const value = budgetAllocations.get(key) || "";
                 const error = validationErrors.get(key);
+                const carryover = carryoverByAccountCategory.get(key) || 0;
 
                 return (
                   <CategoryBudgetInput
@@ -180,6 +185,7 @@ export function BudgetAllocationForm({
                     }
                     max={availableIncome}
                     error={error}
+                    carryover={carryover}
                   />
                 );
               })}

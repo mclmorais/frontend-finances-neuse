@@ -133,6 +133,15 @@ export const categoryReportsSchema = z.array(z.object({
   budget: z.coerce.number()
 }))
 
+// Carryover schema (budget remaining from previous months)
+export const carryoverItemSchema = z.object({
+  accountId: z.number(),
+  categoryId: z.number(),
+  remaining: z.coerce.number(),
+});
+
+export const carryoverSchema = z.array(carryoverItemSchema);
+
 // Type exports
 export type Category = z.infer<typeof categorySchema>;
 export type Account = z.infer<typeof accountSchema>;
@@ -145,3 +154,5 @@ export type Budget = z.infer<typeof budgetSchema>;
 export type BudgetOutputItem = z.infer<typeof budgetOutputItemSchema>;
 export type BatchCreateBudgetsOutput = z.infer<typeof batchCreateBudgetsOutputSchema>;
 export type CategoryReports = z.infer<typeof categoryReportsSchema>;
+export type CarryoverItem = z.infer<typeof carryoverItemSchema>;
+export type Carryover = z.infer<typeof carryoverSchema>;

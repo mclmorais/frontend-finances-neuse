@@ -34,6 +34,8 @@ import {
   incomesSchema,
   budgetsSchema,
   batchCreateBudgetsOutputSchema,
+  carryoverSchema,
+  CarryoverItem,
 } from "@/lib/api-schemas";
 import { toast } from "sonner";
 import { format, startOfMonth } from "date-fns";
@@ -103,6 +105,30 @@ export default function BudgetsPage() {
       );
     },
   });
+
+  // Fetch carryover (remaining budget from previous months)
+  const {
+    data: carryoverData = [],
+    isLoading: carryoverLoading,
+  } = useQuery({
+    queryKey: ["budgets", "carryover", year, month],
+    queryFn: async () => {
+      return apiClient.get(
+        `/budgets/carryover?year=${year}&month=${month}`,
+        carryoverSchema
+      );
+    },
+  });
+
+  // Convert carryover array to a Map for easy lookup
+  const carryoverByAccountCategory = useMemo(() => {
+    const map = new Map<string, number>();
+    carryoverData.forEach((item: CarryoverItem) => {
+      const key = `${item.accountId}-${item.categoryId}`;
+      map.set(key, item.remaining);
+    });
+    return map;
+  }, [carryoverData]);
 
   // Initialize budget allocations from existing budgets
   useEffect(() => {
@@ -306,7 +332,7 @@ export default function BudgetsPage() {
     [accounts, selectedAccountId]
   );
 
-  const isLoading = accountsLoading || categoriesLoading || incomesLoading || budgetsLoading;
+  const isLoading = accountsLoading || categoriesLoading || incomesLoading || budgetsLoading || carryoverLoading;
 
   // Handle errors
   if (accountsError) {
@@ -456,6 +482,7 @@ export default function BudgetsPage() {
                     budgetAllocations={budgetAllocations}
                     onUpdateBudget={handleUpdateBudget}
                     validationErrors={validationErrors}
+                    carryoverByAccountCategory={carryoverByAccountCategory}
                   />
                 </>
               )}

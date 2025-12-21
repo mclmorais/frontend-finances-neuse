@@ -12,6 +12,7 @@ interface CategoryBudgetInputProps {
   onChange: (value: string) => void;
   max: number;
   error?: string;
+  carryover?: number;
 }
 
 export function CategoryBudgetInput({
@@ -20,6 +21,7 @@ export function CategoryBudgetInput({
   onChange,
   max,
   error,
+  carryover = 0,
 }: CategoryBudgetInputProps) {
   const IconComponent = LucideIcons[category.icon as keyof typeof LucideIcons] as React.ComponentType<{ className?: string }>;
 
@@ -40,6 +42,13 @@ export function CategoryBudgetInput({
   const numericValue = parseFloat(value) || 0;
   const percentage = max > 0 ? (numericValue / max) * 100 : 0;
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-4">
@@ -55,12 +64,24 @@ export function CategoryBudgetInput({
               />
             )}
           </div>
-          <Label
-            htmlFor={`budget-${category.id}`}
-            className="text-sm font-medium truncate"
-          >
-            {category.name}
-          </Label>
+          <div className="flex flex-col min-w-0">
+            <Label
+              htmlFor={`budget-${category.id}`}
+              className="text-sm font-medium truncate"
+            >
+              {category.name}
+            </Label>
+            {carryover !== 0 && (
+              <span
+                className={`text-xs ${
+                  carryover > 0 ? "text-green-600" : "text-red-500"
+                }`}
+              >
+                {carryover > 0 ? "+" : ""}
+                {formatCurrency(carryover)} from previous months
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Input Field */}
