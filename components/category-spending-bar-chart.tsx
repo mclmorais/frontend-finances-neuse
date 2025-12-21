@@ -4,6 +4,7 @@ import { ChartContainer } from "./ui/chart";
 import { CategoryReports } from "@/lib/api-schemas";
 import { ICONS } from "@/lib/icons";
 import { useMemo } from "react";
+import { colord } from "colord";
 
 interface CategorySpendingBarChartProps {
     data: (CategoryReports[number] & { delta: number })[]
@@ -38,9 +39,16 @@ function CustomYAxisTick({ x = 0, y = 0, payload, dataMap }: CustomYAxisTickProp
 }
 
 export function CategorySpendingBarChart({ data }: CategorySpendingBarChartProps) {
-    const sortedData = useMemo(() => {
-        return [...data].sort((a, b) => b.budget - a.budget);
+    const enrichedData = useMemo(() => {
+        return data.map(item => ({
+            ...item,
+            monthlyAvailable: Math.max(0, item.budget - item.expensesSum - item.carryover),
+        }));
     }, [data]);
+
+    const sortedData = useMemo(() => {
+        return [...enrichedData].sort((a, b) => b.budget - a.budget);
+    }, [enrichedData]);
 
     const dataMap = useMemo(() => {
         return new Map(sortedData.map(item => [item.categoryName, item]));
@@ -68,13 +76,29 @@ export function CategorySpendingBarChart({ data }: CategorySpendingBarChartProps
                                 width={115}
                                 tick={(props) => <CustomYAxisTick {...props} dataMap={dataMap} />}
                             />
-                            <Bar dataKey="delta" stackId="a" isAnimationActive={true}>
-                                {sortedData.map((c, i) => {
-                                    return <Cell key={`delta-${i}`} fill={c.categoryColor} />;
-                                })}
-                            </Bar>
+                            {/* Spent bar - gray */}
                             <Bar
                                 dataKey="expensesSum"
+                                stackId="a"
+                                isAnimationActive={true}
+                            >
+                                {sortedData.map((c, i) => (
+                                    <Cell key={`spent-${i}`} fill="var(--muted-bar)" />
+                                ))}
+                            </Bar>
+                            {/* Monthly Available bar - category color */}
+                            <Bar
+                                dataKey="monthlyAvailable"
+                                stackId="a"
+                                isAnimationActive={true}
+                            >
+                                {sortedData.map((c, i) => (
+                                    <Cell key={`monthly-${i}`} fill={c.categoryColor} />
+                                ))}
+                            </Bar>
+                            {/* Carryover bar - lighter category color */}
+                            <Bar
+                                dataKey="carryover"
                                 stackId="a"
                                 isAnimationActive={true}
                                 label={(props: LabelProps) => {
@@ -92,7 +116,10 @@ export function CategorySpendingBarChart({ data }: CategorySpendingBarChartProps
                                     );
                                 }}
                             >
-                                {sortedData.map((c, i) => <Cell key={`category-${i}`} fill="var(--muted-bar)" />)}
+                                {sortedData.map((c, i) => {
+                                    const lighterColor = colord(c.categoryColor).alpha(0.5).toRgbString();
+                                    return <Cell key={`carryover-${i}`} fill={lighterColor} />;
+                                })}
                             </Bar>
 
                         </BarChart>
