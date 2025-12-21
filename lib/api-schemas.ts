@@ -124,6 +124,14 @@ export const batchCreateBudgetsOutputSchema = z.object({
   ),
 });
 
+export const categoryReportsSchema = z.array(z.object({
+  categoryName: z.string(),
+  categoryIcon: z.string(),
+  categoryColor: z.string(),
+  expensesSum: z.coerce.number(),
+  budget: z.coerce.number()
+}))
+
 // Type exports
 export type Category = z.infer<typeof categorySchema>;
 export type Account = z.infer<typeof accountSchema>;
@@ -135,3 +143,4 @@ export type MonthlyComparison = z.infer<typeof monthlyComparisonSchema>;
 export type Budget = z.infer<typeof budgetSchema>;
 export type BudgetOutputItem = z.infer<typeof budgetOutputItemSchema>;
 export type BatchCreateBudgetsOutput = z.infer<typeof batchCreateBudgetsOutputSchema>;
+export type CategoryReports = z.infer<typeof categoryReportsSchema>;

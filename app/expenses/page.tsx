@@ -40,9 +40,11 @@ import {
   monthlySummarySchema,
   monthlyComparisonSchema,
   budgetsSchema,
+  categoryReportsSchema,
 } from "@/lib/api-schemas";
 import { toast } from "sonner";
 import { format, startOfMonth } from "date-fns";
+import { CategorySpendingBarChart } from "@/components/category-spending-bar-chart";
 
 export default function ExpensesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -74,9 +76,7 @@ export default function ExpensesPage() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
-    queryFn: async () => {
-      return apiClient.get("/categories", categoriesSchema);
-    },
+    queryFn: async () => apiClient.get("/categories", categoriesSchema)
   });
 
   const { data: accounts = [] } = useQuery({
@@ -85,6 +85,11 @@ export default function ExpensesPage() {
       return apiClient.get("/accounts", accountsSchema);
     },
   });
+
+  const { data: categorySpending = [] } = useQuery({
+    queryKey: ["categories", "spending", year, month],
+    queryFn: () => apiClient.get(`/reports/monthly-categories-budget-comparison?year=${year}&month=${month}`, categoryReportsSchema)
+  })
 
   const { data: monthlySummary = [], isLoading: summaryLoading } = useQuery({
     queryKey: ["expenses", "monthly", "summary", year, month],
@@ -215,11 +220,14 @@ export default function ExpensesPage() {
               isLoading={summaryLoading}
             />
           ) : chartView === "timeline" ? (
-            <ExpenseTimelineChart
-              expenses={expenses}
-              categories={categories}
-              isLoading={expensesLoading}
-            />
+            <CategorySpendingBarChart
+              data={categorySpending.map(c => ({...c, delta: c.budget - c.expensesSum}))}
+             />
+            // <ExpenseTimelineChart
+            //   expenses={expenses}
+            //   categories={categories}
+            //   isLoading={expensesLoading}
+            // />
           ) : null}
 
           {/* Income vs Expenses Comparison */}
