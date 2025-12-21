@@ -130,7 +130,9 @@ export const categoryReportsSchema = z.array(z.object({
   categoryIcon: z.string(),
   categoryColor: z.string(),
   expensesSum: z.coerce.number(),
-  budget: z.coerce.number()
+  budget: z.coerce.number(),
+  carryover: z.coerce.number(),
+  delta: z.coerce.number(),
 }))
 
 // Carryover schema (budget remaining from previous months)

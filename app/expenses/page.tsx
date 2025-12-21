@@ -221,7 +221,7 @@ export default function ExpensesPage() {
             />
           ) : chartView === "timeline" ? (
             <CategorySpendingBarChart
-              data={categorySpending.map(c => ({...c, delta: c.budget - c.expensesSum}))}
+              data={categorySpending}
              />
             // <ExpenseTimelineChart
             //   expenses={expenses}
