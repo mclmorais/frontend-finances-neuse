@@ -19,6 +19,7 @@ interface BudgetAllocationFormProps {
   budgetAllocations: Map<string, string>;
   onUpdateBudget: (accountId: number, categoryId: number, value: string) => void;
   validationErrors: Map<string, string>;
+  accountLevelError?: string;
   carryoverByAccountCategory: Map<string, number>;
 }
 
@@ -29,6 +30,7 @@ export function BudgetAllocationForm({
   budgetAllocations,
   onUpdateBudget,
   validationErrors,
+  accountLevelError,
   carryoverByAccountCategory,
 }: BudgetAllocationFormProps) {
   // Split categories by type
@@ -108,21 +110,29 @@ export function BudgetAllocationForm({
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Summary */}
-        <div className="grid grid-cols-3 gap-4 p-4 rounded-lg bg-muted/50">
-          <div>
-            <p className="text-xs text-muted-foreground">Available Income</p>
-            <p className="text-lg font-semibold">{formatCurrency(availableIncome)}</p>
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-4 p-4 rounded-lg bg-muted/50">
+            <div>
+              <p className="text-xs text-muted-foreground">Available Income</p>
+              <p className="text-lg font-semibold">{formatCurrency(availableIncome)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Total Allocated</p>
+              <p className="text-lg font-semibold">{formatCurrency(totalAllocated)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Remaining</p>
+              <p className={`text-lg font-semibold ${remaining < 0 ? "text-red-500" : "text-green-600"}`}>
+                {formatCurrency(remaining)}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Total Allocated</p>
-            <p className="text-lg font-semibold">{formatCurrency(totalAllocated)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Remaining</p>
-            <p className={`text-lg font-semibold ${remaining < 0 ? "text-red-500" : "text-green-600"}`}>
-              {formatCurrency(remaining)}
-            </p>
-          </div>
+          {/* Account-level error message - shown once */}
+          {accountLevelError && (
+            <div className="px-4">
+              <p className="text-xs text-red-500">{accountLevelError}</p>
+            </div>
+          )}
         </div>
 
         {/* Expenses Section */}

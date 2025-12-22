@@ -26,6 +26,7 @@ import { Loader2, Save, X } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { MonthNavigation } from "@/components/month-navigation";
 import { AccountSelector } from "@/components/account-selector";
+import { FloatingAccountSelector } from "@/components/floating-account-selector";
 import { BudgetAllocationForm } from "@/components/budget-allocation-form";
 import { Account, Category, Income, Budget } from "@/lib/api-schemas";
 import {
@@ -48,6 +49,8 @@ export default function BudgetsPage() {
   const [budgetAllocations, setBudgetAllocations] = useState<Map<string, string>>(new Map());
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showFloatingSelector, setShowFloatingSelector] = useState(false);
+  const accountSelectorRef = React.useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
   // Extract year and month from selectedMonth for API call
@@ -158,6 +161,36 @@ export default function BudgetsPage() {
     }
   }, [accounts, selectedAccountId]);
 
+  // Scroll detection for floating account selector
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!accountSelectorRef.current) return;
+
+      const accountSelectorRect = accountSelectorRef.current.getBoundingClientRect();
+      // Show floating selector when the account selector card is scrolled out of view
+      // Account for header height (56px = h-14)
+      const headerHeight = 56;
+      const shouldShow = accountSelectorRect.bottom < headerHeight;
+
+      setShowFloatingSelector(shouldShow);
+    };
+
+    // Debounce scroll events for performance
+    let timeoutId: NodeJS.Timeout;
+    const debouncedHandleScroll = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleScroll, 10);
+    };
+
+    window.addEventListener("scroll", debouncedHandleScroll, { passive: true });
+    handleScroll(); // Check initial state
+
+    return () => {
+      window.removeEventListener("scroll", debouncedHandleScroll);
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
   // Calculate income by account
   const incomesByAccount = useMemo(() => {
     const map = new Map<number, number>();
@@ -219,15 +252,38 @@ export default function BudgetsPage() {
           currency: "USD",
         }).format(excess);
 
-        // Mark all categories for this account with error
-        budgetAllocations.forEach((value, key) => {
-          if (key.startsWith(`${accountId}-`)) {
-            errors.set(
-              key,
-              `Total budget exceeds available income by ${excessFormatted}`
-            );
-          }
-        });
+        // Don't mark individual categories - this is an account-level error
+        // We'll show it once in the summary section instead
+      }
+    });
+
+    return errors;
+  }, [budgetAllocations, incomesByAccount]);
+
+  // Account-level validation errors (to show once, not repeated)
+  const accountLevelErrors = useMemo(() => {
+    const errors = new Map<number, string>();
+    const budgetTotalsByAccount = new Map<number, number>();
+
+    budgetAllocations.forEach((value, key) => {
+      const [accountId] = key.split("-").map(Number);
+      const numValue = parseFloat(value) || 0;
+      const current = budgetTotalsByAccount.get(accountId) || 0;
+      budgetTotalsByAccount.set(accountId, current + numValue);
+    });
+
+    budgetTotalsByAccount.forEach((budgeted, accountId) => {
+      const income = incomesByAccount.get(accountId) || 0;
+      if (budgeted > income) {
+        const excess = budgeted - income;
+        const excessFormatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(excess);
+        errors.set(
+          accountId,
+          `Total budget exceeds available income by ${excessFormatted}`
+        );
       }
     });
 
@@ -356,6 +412,15 @@ export default function BudgetsPage() {
   return (
     <ProtectedRoute>
       <AppLayout>
+        {/* Floating Account Selector */}
+        <FloatingAccountSelector
+          accounts={accounts}
+          selectedAccountId={selectedAccountId}
+          onSelectAccount={setSelectedAccountId}
+          remainingValue={availableForSelectedAccount}
+          isVisible={showFloatingSelector && !isLoading && accounts.length > 0 && categories.length > 0 && incomes.length > 0}
+        />
+
         <div className="mx-auto max-w-6xl space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
@@ -456,7 +521,12 @@ export default function BudgetsPage() {
               ) : (
                 <>
                   {/* Account Selector */}
-                  <Card>
+                  <Card
+                    ref={accountSelectorRef}
+                    className={`transition-opacity duration-300 ${
+                      showFloatingSelector ? "opacity-40" : "opacity-100"
+                    }`}
+                  >
                     <CardHeader>
                       <CardTitle>Select Account</CardTitle>
                       <CardDescription>
@@ -482,6 +552,7 @@ export default function BudgetsPage() {
                     budgetAllocations={budgetAllocations}
                     onUpdateBudget={handleUpdateBudget}
                     validationErrors={validationErrors}
+                    accountLevelError={accountLevelErrors.get(selectedAccountId || 0)}
                     carryoverByAccountCategory={carryoverByAccountCategory}
                   />
                 </>
