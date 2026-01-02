@@ -214,20 +214,20 @@ export default function ExpensesPage() {
 
           {/* Spending Visualization */}
           {chartView === "bar" ? (
-            <CategorySpendingChart
-              data={monthlySummary}
-              budgets={monthlyBudgets}
-              isLoading={summaryLoading}
-            />
-          ) : chartView === "timeline" ? (
-            <CategorySpendingBarChart
-              data={categorySpending}
-             />
-            // <ExpenseTimelineChart
-            //   expenses={expenses}
-            //   categories={categories}
-            //   isLoading={expensesLoading}
+            // <CategorySpendingChart
+            //   data={monthlySummary}
+            //   budgets={monthlyBudgets}
+            //   isLoading={summaryLoading}
             // />
+            <CategorySpendingBarChart
+            data={categorySpending}
+           />
+          ) : chartView === "timeline" ? (
+            <ExpenseTimelineChart
+              expenses={expenses}
+              categories={categories}
+              isLoading={expensesLoading}
+            />
           ) : null}
 
           {/* Income vs Expenses Comparison */}
