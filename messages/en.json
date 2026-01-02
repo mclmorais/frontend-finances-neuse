@@ -6,6 +6,7 @@
     "expenses": "Expenses",
     "incomes": "Incomes",
     "budgets": "Budgets",
+    "savings": "Savings",
     "personalFinance": "Personal Finance",
     "loggedIn": "Logged in"
   },
@@ -197,6 +198,19 @@
     "monthYear": "MMMM yyyy",
     "shortDate": "MMM dd, yyyy",
     "fullDate": "MMMM dd, yyyy"
+  },
+  "savings": {
+    "title": "Savings",
+    "description": "Track your savings progress",
+    "monthlyDeposits": "Monthly Deposits",
+    "monthlyDepositsDescription": "Amount deposited in each savings category per month",
+    "accumulatedSavings": "Accumulated Savings",
+    "accumulatedSavingsDescription": "Total savings accumulated over time for each category",
+    "categorySavingsDescription": "Monthly deposits and accumulated savings over time",
+    "noSavingsData": "No savings data available",
+    "noSavingsDataDescription": "Start saving to see your progress here",
+    "loadingSavings": "Loading savings data...",
+    "errorLoading": "Failed to load savings data"
   }
 }
 

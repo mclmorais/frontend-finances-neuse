@@ -144,6 +144,21 @@ export const carryoverItemSchema = z.object({
 
 export const carryoverSchema = z.array(carryoverItemSchema);
 
+// Monthly savings schema (for savings evolution endpoint)
+export const monthlySavingsItemSchema = z.object({
+  year: z.number().int(),
+  month: z.number().int().min(1).max(12),
+  categoryId: z.number().int(),
+  categoryName: z.string(),
+  categoryIcon: z.string(),
+  categoryColor: z.string(),
+  categoryType: z.enum(['expense', 'saving']),
+  totalValue: z.coerce.number(), // Coerce string to number
+  accumulatedValue: z.coerce.number(), // Coerce string to number - cumulative from beginning
+});
+
+export const monthlySavingsSchema = z.array(monthlySavingsItemSchema);
+
 // Type exports
 export type Category = z.infer<typeof categorySchema>;
 export type Account = z.infer<typeof accountSchema>;
@@ -158,3 +173,5 @@ export type BatchCreateBudgetsOutput = z.infer<typeof batchCreateBudgetsOutputSc
 export type CategoryReports = z.infer<typeof categoryReportsSchema>;
 export type CarryoverItem = z.infer<typeof carryoverItemSchema>;
 export type Carryover = z.infer<typeof carryoverSchema>;
+export type MonthlySavingsItem = z.infer<typeof monthlySavingsItemSchema>;
+export type MonthlySavings = z.infer<typeof monthlySavingsSchema>;

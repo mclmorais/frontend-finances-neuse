@@ -6,6 +6,7 @@
     "expenses": "Despesas",
     "incomes": "Receitas",
     "budgets": "Orçamentos",
+    "savings": "Poupanças",
     "personalFinance": "Finanças Pessoais",
     "loggedIn": "Conectado"
   },
@@ -197,6 +198,19 @@
     "monthYear": "MMMM 'de' yyyy",
     "shortDate": "dd 'de' MMM, yyyy",
     "fullDate": "dd 'de' MMMM 'de' yyyy"
+  },
+  "savings": {
+    "title": "Poupanças",
+    "description": "Acompanhe o progresso das suas economias",
+    "monthlyDeposits": "Depósitos Mensais",
+    "monthlyDepositsDescription": "Valor depositado em cada categoria de poupança por mês",
+    "accumulatedSavings": "Poupanças Acumuladas",
+    "accumulatedSavingsDescription": "Total de poupanças acumuladas ao longo do tempo para cada categoria",
+    "categorySavingsDescription": "Depósitos mensais e poupanças acumuladas ao longo do tempo",
+    "noSavingsData": "Nenhum dado de poupança disponível",
+    "noSavingsDataDescription": "Comece a economizar para ver seu progresso aqui",
+    "loadingSavings": "Carregando dados de poupança...",
+    "errorLoading": "Falha ao carregar dados de poupança"
   }
 }
 

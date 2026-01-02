@@ -56,6 +56,11 @@ export function AppSidebar() {
       href: "/budgets",
       icon: PiggyBank,
     },
+    {
+      title: t("savings"),
+      href: "/savings",
+      icon: PiggyBank,
+    },
   ]
 
   if (!user) {
