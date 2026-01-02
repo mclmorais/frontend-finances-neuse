@@ -49,7 +49,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Expense, Category, Account } from "@/lib/types";
-import { format, parse } from "date-fns";
+import { parse } from "date-fns";
+import { formatCurrency } from "@/lib/currency";
+import { formatDateShort } from "@/lib/date-format";
+import { useLocale, useTranslations } from "next-intl";
 
 // Icon mapping for dynamic lookup
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -109,6 +112,8 @@ export function ExpensesTable({
   onDelete,
 }: ExpensesTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const locale = useLocale() as "en" | "pt";
+  const t = useTranslations("table");
 
   const getCategoryById = (id: number) => {
     return categories.find((cat) => cat.id === id);
@@ -127,7 +132,7 @@ export function ExpensesTable({
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Date
+            {t("date")}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
@@ -136,13 +141,13 @@ export function ExpensesTable({
         const dateString = row.getValue("date") as string;
         const date = parse(dateString, "yyyy-MM-dd", new Date());
         return (
-          <div className="font-medium">{format(date, "MMM dd, yyyy")}</div>
+          <div className="font-medium">{formatDateShort(date, locale)}</div>
         );
       },
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("description"),
       cell: ({ row }) => {
         const description = row.getValue("description") as string | null;
         return (
@@ -154,7 +159,7 @@ export function ExpensesTable({
     },
     {
       accessorKey: "categoryId",
-      header: "Category",
+      header: t("category"),
       cell: ({ row }) => {
         const category = getCategoryById(row.getValue("categoryId"));
         if (!category) return <div>—</div>;
@@ -187,7 +192,7 @@ export function ExpensesTable({
                 ) : (
                   <ArrowUpFromLine className="w-3 h-3" />
                 )}
-                {savingsType === "deposit" ? "Deposit" : "Withdrawal"}
+                {savingsType === "deposit" ? t("deposit") : t("withdrawal")}
               </div>
             )}
           </div>
@@ -196,7 +201,7 @@ export function ExpensesTable({
     },
     {
       accessorKey: "accountId",
-      header: "Account",
+      header: t("account"),
       cell: ({ row }) => {
         const account = getAccountById(row.getValue("accountId"));
         if (!account) return <div>—</div>;
@@ -224,17 +229,14 @@ export function ExpensesTable({
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Amount
+            {t("amount")}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
       },
       cell: ({ row }) => {
         const value = parseFloat(row.getValue("value"));
-        const formatted = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(value);
+        const formatted = formatCurrency({ locale, value });
         return <div className="font-semibold">{formatted}</div>;
       },
     },
@@ -317,7 +319,7 @@ export function ExpensesTable({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  {useTranslations("common")("noResults")}
                 </TableCell>
               </TableRow>
             )}
@@ -333,7 +335,7 @@ export function ExpensesTable({
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
-          Previous
+          {useTranslations("common")("previous")}
         </Button>
         <Button
           variant="outline"
@@ -341,7 +343,7 @@ export function ExpensesTable({
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
-          Next
+          {useTranslations("common")("next")}
         </Button>
       </div>
     </div>

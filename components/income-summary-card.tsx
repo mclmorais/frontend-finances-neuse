@@ -2,7 +2,9 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { TrendingUp, Loader2 } from "lucide-react";
-import { format } from "date-fns";
+import { formatCurrency } from "@/lib/currency";
+import { formatMonthYear } from "@/lib/date-format";
+import { useLocale } from "next-intl";
 
 interface IncomeSummaryCardProps {
   totalIncome: number;
@@ -17,10 +19,8 @@ export function IncomeSummaryCard({
   isLoading = false,
   selectedMonth,
 }: IncomeSummaryCardProps) {
-  const formattedTotal = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(totalIncome);
+  const locale = useLocale() as "en" | "pt";
+  const formattedTotal = formatCurrency({ locale, value: totalIncome });
 
   return (
     <Card>
@@ -30,9 +30,11 @@ export function IncomeSummaryCard({
             <TrendingUp className="size-6 text-green-500" />
           </div>
           <div>
-            <CardTitle className="text-lg">Monthly Income</CardTitle>
+            <CardTitle className="text-lg">
+              {locale === "pt" ? "Receita Mensal" : "Monthly Income"}
+            </CardTitle>
             <p className="text-sm text-muted-foreground">
-              {format(selectedMonth, "MMMM yyyy")}
+              {formatMonthYear(selectedMonth, locale)}
             </p>
           </div>
         </div>
@@ -46,7 +48,9 @@ export function IncomeSummaryCard({
           <div className="space-y-2">
             <p className="text-3xl font-bold text-green-600">{formattedTotal}</p>
             <p className="text-sm text-muted-foreground">
-              {incomeCount} {incomeCount === 1 ? "transaction" : "transactions"}
+              {incomeCount} {incomeCount === 1 
+                ? (locale === "pt" ? "transação" : "transaction") 
+                : (locale === "pt" ? "transações" : "transactions")}
             </p>
           </div>
         )}

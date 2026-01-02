@@ -39,9 +39,15 @@ import {
   CarryoverItem,
 } from "@/lib/api-schemas";
 import { toast } from "sonner";
-import { format, startOfMonth } from "date-fns";
+import { startOfMonth } from "date-fns";
+import { useTranslations, useLocale } from "next-intl";
+import { formatMonthYear } from "@/lib/date-format";
+import { formatCurrency } from "@/lib/currency";
 
 export default function BudgetsPage() {
+  const t = useTranslations("budgets");
+  const tCommon = useTranslations("common");
+  const locale = useLocale() as "en" | "pt";
   const [selectedMonth, setSelectedMonth] = useState<Date>(() =>
     startOfMonth(new Date())
   );
@@ -234,7 +240,7 @@ export default function BudgetsPage() {
 
       // Validate numeric format
       if (isNaN(numValue) || numValue < 0) {
-        errors.set(key, "Invalid budget amount");
+        errors.set(key, t("validationError"));
         return;
       }
 
@@ -246,12 +252,6 @@ export default function BudgetsPage() {
     budgetTotalsByAccount.forEach((budgeted, accountId) => {
       const income = incomesByAccount.get(accountId) || 0;
       if (budgeted > income) {
-        const excess = budgeted - income;
-        const excessFormatted = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(excess);
-
         // Don't mark individual categories - this is an account-level error
         // We'll show it once in the summary section instead
       }
@@ -276,13 +276,10 @@ export default function BudgetsPage() {
       const income = incomesByAccount.get(accountId) || 0;
       if (budgeted > income) {
         const excess = budgeted - income;
-        const excessFormatted = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(excess);
+        const excessFormatted = formatCurrency({ locale, value: excess });
         errors.set(
           accountId,
-          `Total budget exceeds available income by ${excessFormatted}`
+          `${t("budgetExceedsIncome")} ${excessFormatted}`
         );
       }
     });
@@ -304,16 +301,16 @@ export default function BudgetsPage() {
 
       if (result.errors.length > 0) {
         toast.warning(
-          `${result.created.length} budgets saved, ${result.errors.length} conflicts`
+          `${result.created.length} ${t("saveWarning")} ${result.errors.length}`
         );
       } else {
-        toast.success(`All ${result.created.length} budgets saved successfully`);
+        toast.success(`${result.created.length} ${t("saveSuccess")}`);
       }
 
       setHasUnsavedChanges(false);
     },
     onError: (error: Error) => {
-      toast.error(`Failed to save budgets: ${error.message}`);
+      toast.error(`${t("saveError")} ${error.message}`);
     },
   });
 
@@ -336,13 +333,15 @@ export default function BudgetsPage() {
   const handleSave = async () => {
     // Validate first
     if (validationErrors.size > 0) {
-      toast.error("Please fix validation errors before saving");
+      toast.error(t("validationError"));
       return;
     }
 
     // Convert allocations to array format for API
     const budgets: { accountId: number; categoryId: number; date: string; value: string }[] = [];
-    const monthDate = format(selectedMonth, "yyyy-MM-01");
+    const year = selectedMonth.getFullYear();
+    const month = String(selectedMonth.getMonth() + 1).padStart(2, "0");
+    const monthDate = `${year}-${month}-01`;
 
     budgetAllocations.forEach((value, key) => {
       const [accountId, categoryId] = key.split("-").map(Number);
@@ -355,7 +354,7 @@ export default function BudgetsPage() {
     });
 
     if (budgets.length === 0) {
-      toast.info("No budgets to save");
+      toast.info(t("noBudgetsToSave"));
       return;
     }
 
@@ -379,7 +378,7 @@ export default function BudgetsPage() {
     setBudgetAllocations(allocations);
     setHasUnsavedChanges(false);
     setShowCancelDialog(false);
-    toast.info("Changes discarded");
+    toast.info(t("changesDiscarded"));
   };
 
   // Get selected account object
@@ -399,7 +398,7 @@ export default function BudgetsPage() {
             <Card>
               <CardContent className="pt-6">
                 <p className="text-sm text-red-500">
-                  Failed to load accounts: {(accountsError as Error).message}
+                  {useTranslations("accounts")("errorLoading")} {(accountsError as Error).message}
                 </p>
               </CardContent>
             </Card>
@@ -425,16 +424,16 @@ export default function BudgetsPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Budgets</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
               <p className="text-muted-foreground mt-2">
-                Plan your monthly spending and savings
+                {t("description")}
               </p>
             </div>
             <div className="flex gap-2">
               {hasUnsavedChanges && (
                 <Button variant="outline" onClick={handleCancel}>
                   <X className="mr-2 size-4" />
-                  Cancel
+                  {tCommon("cancel")}
                 </Button>
               )}
               <Button
@@ -446,7 +445,7 @@ export default function BudgetsPage() {
                 ) : (
                   <Save className="mr-2 size-4" />
                 )}
-                Save Changes
+                {tCommon("saveChanges")}
               </Button>
             </div>
           </div>
@@ -454,9 +453,9 @@ export default function BudgetsPage() {
           {/* Month Navigation */}
           <Card>
             <CardHeader>
-              <CardTitle>Select Month</CardTitle>
+              <CardTitle>{t("selectMonth")}</CardTitle>
               <CardDescription>
-                Choose the month you want to budget for
+                {t("selectMonthDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -478,12 +477,12 @@ export default function BudgetsPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex flex-col items-center justify-center py-8 text-center">
-                      <p className="text-sm font-medium">No accounts found</p>
+                      <p className="text-sm font-medium">{t("noAccounts")}</p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Create an account first to start budgeting
+                        {t("noAccountsDescription")}
                       </p>
                       <Button className="mt-4" asChild>
-                        <a href="/accounts">Go to Accounts</a>
+                        <a href="/accounts">{t("goToAccounts")}</a>
                       </Button>
                     </div>
                   </CardContent>
@@ -492,12 +491,12 @@ export default function BudgetsPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex flex-col items-center justify-center py-8 text-center">
-                      <p className="text-sm font-medium">No categories found</p>
+                      <p className="text-sm font-medium">{t("noCategories")}</p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Create categories first to start budgeting
+                        {t("noCategoriesDescription")}
                       </p>
                       <Button className="mt-4" asChild>
-                        <a href="/categories">Go to Categories</a>
+                        <a href="/categories">{t("goToCategories")}</a>
                       </Button>
                     </div>
                   </CardContent>
@@ -507,13 +506,13 @@ export default function BudgetsPage() {
                   <CardContent className="pt-6">
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                       <p className="text-sm font-medium">
-                        No income recorded for {format(selectedMonth, "MMMM yyyy")}
+                        {t("noIncome")} {formatMonthYear(selectedMonth, locale)}
                       </p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Record income for this month to start budgeting
+                        {t("noIncomeDescription")}
                       </p>
                       <Button className="mt-4" asChild>
-                        <a href="/incomes">Go to Incomes</a>
+                        <a href="/incomes">{t("goToIncomes")}</a>
                       </Button>
                     </div>
                   </CardContent>
@@ -528,9 +527,9 @@ export default function BudgetsPage() {
                     }`}
                   >
                     <CardHeader>
-                      <CardTitle>Select Account</CardTitle>
+                      <CardTitle>{t("selectAccount")}</CardTitle>
                       <CardDescription>
-                        Choose which account you want to budget for {format(selectedMonth, "MMMM yyyy")}
+                        {t("selectAccountDescription")} {formatMonthYear(selectedMonth, locale)}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -566,18 +565,18 @@ export default function BudgetsPage() {
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Discard Changes?</AlertDialogTitle>
+            <AlertDialogTitle>{t("discardChangesTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              You have unsaved changes. Are you sure you want to discard them?
+              {t("discardChangesDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("keepEditing")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmCancel}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Discard Changes
+              {tCommon("discardChanges")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

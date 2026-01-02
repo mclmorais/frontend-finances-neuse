@@ -14,6 +14,9 @@ import {
   ChartTooltip,
 } from "@/components/ui/chart";
 import { Expense, Category, TimelineDataPoint } from "@/lib/types";
+import { useTranslations, useLocale } from "next-intl";
+import { formatCurrency } from "@/lib/currency";
+import { formatDateShort } from "@/lib/date-format";
 import {
   Wallet,
   ShoppingCart,
@@ -135,6 +138,9 @@ const CustomCategoryTick = (props: any) => {
 
 // Custom tooltip component
 const CustomTooltip = ({ active, payload }: any) => {
+  const t = useTranslations("expenses");
+  const locale = useLocale() as "en" | "pt";
+  
   if (!active || !payload || !payload.length) return null;
 
   const data = payload[0].payload as TimelineDataPoint;
@@ -153,30 +159,24 @@ const CustomTooltip = ({ active, payload }: any) => {
       </div>
       <div className="space-y-1 text-sm">
         <div className="flex justify-between gap-4">
-          <span className="text-muted-foreground">Amount:</span>
+          <span className="text-muted-foreground">{t("amountLabel")}</span>
           <span className="font-medium">
-            {new Intl.NumberFormat("en-US", {
-              style: "currency",
-              currency: "USD",
-            }).format(data.value)}
+            {formatCurrency({ locale, value: data.value })}
           </span>
         </div>
         <div className="flex justify-between gap-4">
-          <span className="text-muted-foreground">Date:</span>
+          <span className="text-muted-foreground">{t("dateLabel")}</span>
           <span className="font-medium">
             {(() => {
               const [year, month, day] = data.dateString.split("-").map(Number);
               const date = new Date(year, month - 1, day);
-              return date.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              });
+              return formatDateShort(date, locale);
             })()}
           </span>
         </div>
         {data.description && (
           <div className="flex justify-between gap-4">
-            <span className="text-muted-foreground">Description:</span>
+            <span className="text-muted-foreground">{t("descriptionLabel")}</span>
             <span className="font-medium truncate max-w-[150px]">
               {data.description}
             </span>
@@ -198,6 +198,9 @@ export function ExpenseTimelineChart({
   categories,
   isLoading = false,
 }: ExpenseTimelineChartProps) {
+  const t = useTranslations("expenses");
+  const tCommon = useTranslations("common");
+  const locale = useLocale() as "en" | "pt";
   // Transform data for timeline visualization
   const { timelineData, categoryMap, chartHeight, maxValue } = useMemo(() => {
     // Calculate total spending per category to sort them
@@ -304,12 +307,12 @@ export function ExpenseTimelineChart({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Spending Timeline</CardTitle>
-          <CardDescription>Loading...</CardDescription>
+          <CardTitle>{t("spendingTimeline")}</CardTitle>
+          <CardDescription>{tCommon("loading")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px] flex items-center justify-center">
-            <p className="text-muted-foreground">Loading chart data...</p>
+            <p className="text-muted-foreground">{t("loadingChartData")}</p>
           </div>
         </CardContent>
       </Card>
@@ -320,13 +323,13 @@ export function ExpenseTimelineChart({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Spending Timeline</CardTitle>
-          <CardDescription>No expenses for this month</CardDescription>
+          <CardTitle>{t("spendingTimeline")}</CardTitle>
+          <CardDescription>{t("noExpensesThisMonth")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px] flex items-center justify-center">
             <p className="text-muted-foreground">
-              No spending data available for this month
+              {t("noSpendingData")}
             </p>
           </div>
         </CardContent>
@@ -340,17 +343,13 @@ export function ExpenseTimelineChart({
   const yTicks = Array.from({ length: categoryCount }, (_, i) => i);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Spending Timeline</CardTitle>
-        <CardDescription>
-          Total:{" "}
-          {new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-          }).format(totalSpending)}
-        </CardDescription>
-      </CardHeader>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("spendingTimeline")}</CardTitle>
+          <CardDescription>
+            {t("total")} {formatCurrency({ locale, value: totalSpending })}
+          </CardDescription>
+        </CardHeader>
       <CardContent>
         <div style={{ height: `${chartHeight}px` }}>
           <ChartContainer config={chartConfig} className="h-full aspect-auto">
@@ -370,7 +369,7 @@ export function ExpenseTimelineChart({
                 tickLine={false}
                 axisLine={false}
                 label={{
-                  value: "Day of Month",
+                  value: t("dayOfMonth"),
                   position: "insideBottom",
                   offset: -10,
                 }}

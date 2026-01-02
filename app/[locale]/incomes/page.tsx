@@ -36,9 +36,14 @@ import {
   incomeMonthlySummarySchema,
 } from "@/lib/api-schemas";
 import { toast } from "sonner";
-import { format, startOfMonth } from "date-fns";
+import { startOfMonth } from "date-fns";
+import { useTranslations, useLocale } from "next-intl";
+import { formatMonthYear } from "@/lib/date-format";
 
 export default function IncomesPage() {
+  const t = useTranslations("incomes");
+  const tCommon = useTranslations("common");
+  const locale = useLocale() as "en" | "pt";
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [incomeToDelete, setIncomeToDelete] = useState<Income | null>(null);
   const [incomeToEdit, setIncomeToEdit] = useState<Income | null>(null);
@@ -91,11 +96,11 @@ export default function IncomesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["incomes", "monthly"] });
-      toast.success("Income deleted successfully");
+      toast.success(t("deleteSuccess"));
       setIncomeToDelete(null);
     },
     onError: (error: Error) => {
-      toast.error(`Failed to delete income: ${error.message}`);
+      toast.error(`${t("deleteError")} ${error.message}`);
     },
   });
 
@@ -117,7 +122,7 @@ export default function IncomesPage() {
             <Card>
               <CardContent className="pt-6">
                 <p className="text-sm text-red-500">
-                  Failed to load incomes: {(incomesError as Error).message}
+                  {t("errorLoading")} {(incomesError as Error).message}
                 </p>
               </CardContent>
             </Card>
@@ -133,14 +138,14 @@ export default function IncomesPage() {
         <div className="mx-auto max-w-6xl space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Incomes</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
               <p className="text-muted-foreground mt-2">
-                Track and manage your income sources
+                {t("description")}
               </p>
             </div>
             <Button onClick={handleOpenCreateModal}>
               <Plus className="mr-2 size-4" />
-              Add Income
+              {t("addIncome")}
             </Button>
           </div>
 
@@ -154,9 +159,9 @@ export default function IncomesPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Monthly Incomes</CardTitle>
+              <CardTitle>{t("monthlyIncomes")}</CardTitle>
               <CardDescription>
-                Incomes for {format(selectedMonth, "MMMM yyyy")}
+                {t("incomesFor")} {formatMonthYear(selectedMonth, locale)}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -174,11 +179,10 @@ export default function IncomesPage() {
               ) : incomes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <p className="text-sm font-medium">
-                    No incomes recorded yet
+                    {t("noIncomes")}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Click &quot;Add Income&quot; to record your first
-                    transaction
+                    {t("noIncomesDescription")}
                   </p>
                 </div>
               ) : (
@@ -210,14 +214,13 @@ export default function IncomesPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Income</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this income? This action cannot
-              be undone.
+              {t("deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (incomeToDelete) {
@@ -226,7 +229,7 @@ export default function IncomesPage() {
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {tCommon("delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -2,8 +2,10 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Loader2, AlertTriangle } from "lucide-react";
-import { format } from "date-fns";
 import { MonthlyComparison } from "@/lib/api-schemas";
+import { formatCurrency } from "@/lib/currency";
+import { formatMonthYear } from "@/lib/date-format";
+import { useLocale, useTranslations } from "next-intl";
 
 interface MonthlyComparisonCardProps {
   comparison: MonthlyComparison;
@@ -17,13 +19,8 @@ export function MonthlyComparisonCard({
   selectedMonth,
 }: MonthlyComparisonCardProps) {
   const { totalIncome, totalExpenses, netBalance } = comparison;
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(value);
-  };
+  const locale = useLocale() as "en" | "pt";
+  const t = useTranslations("comparison");
 
   // Calculate percentage
   const percentage = totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 0;
@@ -62,9 +59,9 @@ export function MonthlyComparisonCard({
             <Icon className={`size-6 ${iconColor}`} />
           </div>
           <div>
-            <CardTitle className="text-lg">Income vs Expenses</CardTitle>
+            <CardTitle className="text-lg">{t("incomeVsExpenses")}</CardTitle>
             <p className="text-sm text-muted-foreground">
-              {format(selectedMonth, "MMMM yyyy")}
+              {formatMonthYear(selectedMonth, locale)}
             </p>
           </div>
         </div>
@@ -79,15 +76,15 @@ export function MonthlyComparisonCard({
             {/* Income and Expenses */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Income</p>
+                <p className="text-sm text-muted-foreground">{t("income")}</p>
                 <p className="text-xl font-bold text-green-600">
-                  {formatCurrency(totalIncome)}
+                  {formatCurrency({ locale, value: totalIncome })}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Expenses</p>
+                <p className="text-sm text-muted-foreground">{t("expenses")}</p>
                 <p className="text-xl font-bold text-red-600">
-                  {formatCurrency(totalExpenses)}
+                  {formatCurrency({ locale, value: totalExpenses })}
                 </p>
               </div>
             </div>
@@ -110,12 +107,12 @@ export function MonthlyComparisonCard({
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
-                  {displayPercentage}% spent
+                  {displayPercentage}% {t("spent")}
                 </span>
                 {isOverBudget && (
                   <span className="flex items-center gap-1 text-red-600 font-medium">
                     <AlertTriangle className="size-3" />
-                    Over budget
+                    {t("overBudget")}
                   </span>
                 )}
               </div>
@@ -123,13 +120,13 @@ export function MonthlyComparisonCard({
 
             {/* Net Balance */}
             <div className="border-t pt-3">
-              <p className="text-sm text-muted-foreground">Net Balance</p>
+              <p className="text-sm text-muted-foreground">{t("netBalance")}</p>
               <p
                 className={`text-2xl font-bold ${
                   netBalance >= 0 ? "text-blue-600" : "text-red-600"
                 }`}
               >
-                {formatCurrency(netBalance)}
+                {formatCurrency({ locale, value: netBalance })}
               </p>
             </div>
 
@@ -137,21 +134,21 @@ export function MonthlyComparisonCard({
             {totalIncome === 0 && totalExpenses > 0 && (
               <div className="rounded-md bg-yellow-50 p-3 dark:bg-yellow-950">
                 <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  No income recorded for this month
+                  {t("noIncome")}
                 </p>
               </div>
             )}
             {totalIncome === 0 && totalExpenses === 0 && (
               <div className="rounded-md bg-gray-50 p-3 dark:bg-gray-900">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  No transactions recorded for this month
+                  {t("noTransactions")}
                 </p>
               </div>
             )}
             {totalExpenses === 0 && totalIncome > 0 && (
               <div className="rounded-md bg-green-50 p-3 dark:bg-green-950">
                 <p className="text-sm text-green-800 dark:text-green-200">
-                  No expenses recorded - great job!
+                  {t("noExpenses")}
                 </p>
               </div>
             )}

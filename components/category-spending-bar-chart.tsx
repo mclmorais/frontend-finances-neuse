@@ -5,6 +5,7 @@ import { CategoryReports } from "@/lib/api-schemas";
 import { ICONS } from "@/lib/icons";
 import { useMemo } from "react";
 import { colord } from "colord";
+import { useTranslations } from "next-intl";
 
 interface CategorySpendingBarChartProps {
     data: (CategoryReports[number] & { delta: number })[]
@@ -39,6 +40,7 @@ function CustomYAxisTick({ x = 0, y = 0, payload, dataMap }: CustomYAxisTickProp
 }
 
 export function CategorySpendingBarChart({ data }: CategorySpendingBarChartProps) {
+    const t = useTranslations("expenses");
     const enrichedData = useMemo(() => {
         return data.map(item => ({
             ...item,
@@ -57,7 +59,7 @@ export function CategorySpendingBarChart({ data }: CategorySpendingBarChartProps
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Spending by Category</CardTitle>
+                <CardTitle>{t("spendingByCategory")}</CardTitle>
             </CardHeader>
             <CardContent>
                 <div style={{ height: `${Math.min(500, Math.max(150, sortedData.length * 30 + 40))}px` }} className="overflow-hidden">
