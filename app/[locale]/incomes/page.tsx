@@ -24,26 +24,29 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Loader2, Plus } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
-import { ExpenseFormModal } from "@/components/expense-form-modal";
-import { ExpensesTable } from "@/components/expenses-table";
+import { IncomeFormModal } from "@/components/income-form-modal";
+import { IncomesTable } from "@/components/incomes-table";
 import { MonthNavigation } from "@/components/month-navigation";
-import { CategorySpendingChart } from "@/components/category-spending-chart";
-import { NaturalExpenseInput } from "@/components/natural-expense-input";
-import { Expense, Category, Account } from "@/lib/types";
+import { IncomeSummaryCard } from "@/components/income-summary-card";
+import { Income, Account } from "@/lib/types";
 import {
-  expensesSchema,
-  categoriesSchema,
+  incomesSchema,
   accountsSchema,
   emptyResponseSchema,
-  monthlySummarySchema,
+  incomeMonthlySummarySchema,
 } from "@/lib/api-schemas";
 import { toast } from "sonner";
-import { format, startOfMonth } from "date-fns";
+import { startOfMonth } from "date-fns";
+import { useTranslations, useLocale } from "next-intl";
+import { formatMonthYear } from "@/lib/date-format";
 
-export default function ExpensesPage() {
+export default function IncomesPage() {
+  const t = useTranslations("incomes");
+  const tCommon = useTranslations("common");
+  const locale = useLocale() as "en" | "pt";
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
-  const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
+  const [incomeToDelete, setIncomeToDelete] = useState<Income | null>(null);
+  const [incomeToEdit, setIncomeToEdit] = useState<Income | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<Date>(() =>
     startOfMonth(new Date()),
   );
@@ -54,23 +57,16 @@ export default function ExpensesPage() {
   const month = selectedMonth.getMonth() + 1; // JavaScript months are 0-indexed, API expects 1-indexed
 
   const {
-    data: expenses = [],
-    isLoading: expensesLoading,
-    error: expensesError,
+    data: incomes = [],
+    isLoading: incomesLoading,
+    error: incomesError,
   } = useQuery({
-    queryKey: ["expenses", "monthly", year, month],
+    queryKey: ["incomes", "monthly", year, month],
     queryFn: async () => {
       return apiClient.get(
-        `/expenses/monthly?year=${year}&month=${month}`,
-        expensesSchema,
+        `/incomes/monthly?year=${year}&month=${month}`,
+        incomesSchema,
       );
-    },
-  });
-
-  const { data: categories = [] } = useQuery({
-    queryKey: ["categories"],
-    queryFn: async () => {
-      return apiClient.get("/categories", categoriesSchema);
     },
   });
 
@@ -81,41 +77,44 @@ export default function ExpensesPage() {
     },
   });
 
-  const { data: monthlySummary = [], isLoading: summaryLoading } = useQuery({
-    queryKey: ["expenses", "monthly", "summary", year, month],
+  const {
+    data: monthlySummary = { totalIncome: 0, incomeCount: 0 },
+    isLoading: summaryLoading,
+  } = useQuery({
+    queryKey: ["incomes", "monthly", "summary", year, month],
     queryFn: async () => {
       return apiClient.get(
-        `/expenses/monthly/summary?year=${year}&month=${month}`,
-        monthlySummarySchema,
+        `/incomes/monthly/summary?year=${year}&month=${month}`,
+        incomeMonthlySummarySchema,
       );
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (expenseId: number) => {
-      return apiClient.delete(`/expenses/${expenseId}`, emptyResponseSchema);
+    mutationFn: async (incomeId: number) => {
+      return apiClient.delete(`/incomes/${incomeId}`, emptyResponseSchema);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses", "monthly"] });
-      toast.success("Expense deleted successfully");
-      setExpenseToDelete(null);
+      queryClient.invalidateQueries({ queryKey: ["incomes", "monthly"] });
+      toast.success(t("deleteSuccess"));
+      setIncomeToDelete(null);
     },
     onError: (error: Error) => {
-      toast.error(`Failed to delete expense: ${error.message}`);
+      toast.error(`${t("deleteError")} ${error.message}`);
     },
   });
 
   const handleOpenCreateModal = () => {
-    setExpenseToEdit(null);
+    setIncomeToEdit(null);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setExpenseToEdit(null);
+    setIncomeToEdit(null);
   };
 
-  if (expensesError) {
+  if (incomesError) {
     return (
       <ProtectedRoute>
         <AppLayout>
@@ -123,7 +122,7 @@ export default function ExpensesPage() {
             <Card>
               <CardContent className="pt-6">
                 <p className="text-sm text-red-500">
-                  Failed to load expenses: {(expensesError as Error).message}
+                  {t("errorLoading")} {(incomesError as Error).message}
                 </p>
               </CardContent>
             </Card>
@@ -139,31 +138,30 @@ export default function ExpensesPage() {
         <div className="mx-auto max-w-6xl space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Expenses</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
               <p className="text-muted-foreground mt-2">
-                Track and manage your spending
+                {t("description")}
               </p>
             </div>
             <Button onClick={handleOpenCreateModal}>
               <Plus className="mr-2 size-4" />
-              Add Expense
+              {t("addIncome")}
             </Button>
           </div>
 
-          {/* Natural Language Expense Input */}
-          <NaturalExpenseInput categories={categories} accounts={accounts} />
-
-          {/* Category Spending Chart */}
-          <CategorySpendingChart
-            data={monthlySummary}
+          {/* Income Summary Card */}
+          <IncomeSummaryCard
+            totalIncome={monthlySummary.totalIncome}
+            incomeCount={monthlySummary.incomeCount}
             isLoading={summaryLoading}
+            selectedMonth={selectedMonth}
           />
 
           <Card>
             <CardHeader>
-              <CardTitle>Monthly Expenses</CardTitle>
+              <CardTitle>{t("monthlyIncomes")}</CardTitle>
               <CardDescription>
-                Expenses for {format(selectedMonth, "MMMM yyyy")}
+                {t("incomesFor")} {formatMonthYear(selectedMonth, locale)}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -174,30 +172,28 @@ export default function ExpensesPage() {
                   onMonthChange={setSelectedMonth}
                 />
               </div>
-              {expensesLoading ? (
+              {incomesLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="size-6 animate-spin text-muted-foreground" />
                 </div>
-              ) : expenses.length === 0 ? (
+              ) : incomes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <p className="text-sm font-medium">
-                    No expenses recorded yet
+                    {t("noIncomes")}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Click &quot;Add Expense&quot; to record your first
-                    transaction
+                    {t("noIncomesDescription")}
                   </p>
                 </div>
               ) : (
-                <ExpensesTable
-                  expenses={expenses}
-                  categories={categories}
+                <IncomesTable
+                  incomes={incomes}
                   accounts={accounts}
-                  onEdit={(expense) => {
-                    setExpenseToEdit(expense);
+                  onEdit={(income) => {
+                    setIncomeToEdit(income);
                     setIsModalOpen(true);
                   }}
-                  onDelete={setExpenseToDelete}
+                  onDelete={setIncomeToDelete}
                 />
               )}
             </CardContent>
@@ -205,36 +201,35 @@ export default function ExpensesPage() {
         </div>
       </AppLayout>
 
-      <ExpenseFormModal
-        mode={expenseToEdit ? "edit" : "create"}
-        expense={expenseToEdit}
+      <IncomeFormModal
+        mode={incomeToEdit ? "edit" : "create"}
+        income={incomeToEdit}
         open={isModalOpen}
         onOpenChange={handleCloseModal}
       />
 
       <AlertDialog
-        open={!!expenseToDelete}
-        onOpenChange={() => setExpenseToDelete(null)}
+        open={!!incomeToDelete}
+        onOpenChange={() => setIncomeToDelete(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Expense</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this expense? This action cannot
-              be undone.
+              {t("deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (expenseToDelete) {
-                  deleteMutation.mutate(expenseToDelete.id);
+                if (incomeToDelete) {
+                  deleteMutation.mutate(incomeToDelete.id);
                 }
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {tCommon("delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

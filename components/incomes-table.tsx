@@ -24,8 +24,6 @@ import {
   Pencil,
   Trash2,
   ArrowUpDown,
-  ArrowDownToLine,
-  ArrowUpFromLine,
   Wallet,
   ShoppingCart,
   Home,
@@ -48,7 +46,7 @@ import {
   CreditCard,
   type LucideIcon,
 } from "lucide-react";
-import { Expense, Category, Account } from "@/lib/types";
+import { Income, Account } from "@/lib/types";
 import { parse } from "date-fns";
 import { formatCurrency } from "@/lib/currency";
 import { formatDateShort } from "@/lib/date-format";
@@ -96,34 +94,29 @@ const getIconComponent = (iconName: string): LucideIcon => {
   return icon;
 };
 
-interface ExpensesTableProps {
-  expenses: Expense[];
-  categories: Category[];
+interface IncomesTableProps {
+  incomes: Income[];
   accounts: Account[];
-  onEdit: (expense: Expense) => void;
-  onDelete: (expense: Expense) => void;
+  onEdit: (income: Income) => void;
+  onDelete: (income: Income) => void;
 }
 
-export function ExpensesTable({
-  expenses,
-  categories,
+export function IncomesTable({
+  incomes,
   accounts,
   onEdit,
   onDelete,
-}: ExpensesTableProps) {
+}: IncomesTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const locale = useLocale() as "en" | "pt";
   const t = useTranslations("table");
-
-  const getCategoryById = (id: number) => {
-    return categories.find((cat) => cat.id === id);
-  };
+  const tCommon = useTranslations("common");
 
   const getAccountById = (id: number) => {
     return accounts.find((acc) => acc.id === id);
   };
 
-  const columns: ColumnDef<Expense>[] = [
+  const columns: ColumnDef<Income>[] = [
     {
       accessorKey: "date",
       header: ({ column }) => {
@@ -153,48 +146,6 @@ export function ExpensesTable({
         return (
           <div className="text-sm text-muted-foreground">
             {description || "—"}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "categoryId",
-      header: t("category"),
-      cell: ({ row }) => {
-        const category = getCategoryById(row.getValue("categoryId"));
-        if (!category) return <div>—</div>;
-
-        const IconComponent = getIconComponent(category.icon);
-        const expense = row.original;
-        const savingsType = expense.savingsType;
-
-        return (
-          <div className="flex items-center gap-2">
-            <div
-              className="inline-flex items-center gap-2 rounded-full px-3 py-1.5"
-              style={{ backgroundColor: category.color }}
-            >
-              <IconComponent className="w-4 h-4 text-white" />
-              <span className="text-sm font-medium text-white">
-                {category.name}
-              </span>
-            </div>
-            {savingsType && (
-              <div
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
-                  savingsType === "deposit"
-                    ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                    : "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300"
-                }`}
-              >
-                {savingsType === "deposit" ? (
-                  <ArrowDownToLine className="w-3 h-3" />
-                ) : (
-                  <ArrowUpFromLine className="w-3 h-3" />
-                )}
-                {savingsType === "deposit" ? t("deposit") : t("withdrawal")}
-              </div>
-            )}
           </div>
         );
       },
@@ -243,13 +194,13 @@ export function ExpensesTable({
     {
       id: "actions",
       cell: ({ row }) => {
-        const expense = row.original;
+        const income = row.original;
         return (
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => onEdit(expense)}>
+            <Button variant="ghost" size="sm" onClick={() => onEdit(income)}>
               <Pencil className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => onDelete(expense)}>
+            <Button variant="ghost" size="sm" onClick={() => onDelete(income)}>
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>
@@ -259,7 +210,7 @@ export function ExpensesTable({
   ];
 
   const table = useReactTable({
-    data: expenses,
+    data: incomes,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -319,7 +270,7 @@ export function ExpensesTable({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  {useTranslations("common")("noResults")}
+                  {tCommon("noResults")}
                 </TableCell>
               </TableRow>
             )}
@@ -335,7 +286,7 @@ export function ExpensesTable({
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
-          {useTranslations("common")("previous")}
+          {tCommon("previous")}
         </Button>
         <Button
           variant="outline"
@@ -343,7 +294,7 @@ export function ExpensesTable({
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
-          {useTranslations("common")("next")}
+          {tCommon("next")}
         </Button>
       </div>
     </div>

@@ -1,0 +1,327 @@
+"use client";
+
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ProtectedRoute } from "@/components/protected-route";
+import { AppLayout } from "@/components/app-layout";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Loader2, Plus } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
+import { ExpenseFormModal } from "@/components/expense-form-modal";
+import { ExpensesTable } from "@/components/expenses-table";
+import { MonthNavigation } from "@/components/month-navigation";
+import { CategorySpendingChart } from "@/components/category-spending-chart";
+import { ExpenseTimelineChart } from "@/components/expense-timeline-chart";
+import { NaturalExpenseInput } from "@/components/natural-expense-input";
+import { MonthlyComparisonCard } from "@/components/monthly-comparison-card";
+import { Expense, Category, Account, ChartView } from "@/lib/types";
+import {
+  expensesSchema,
+  categoriesSchema,
+  accountsSchema,
+  emptyResponseSchema,
+  monthlySummarySchema,
+  monthlyComparisonSchema,
+  budgetsSchema,
+  categoryReportsSchema,
+} from "@/lib/api-schemas";
+import { toast } from "sonner";
+import { startOfMonth } from "date-fns";
+import { CategorySpendingBarChart } from "@/components/category-spending-bar-chart";
+import { useTranslations, useLocale } from "next-intl";
+import { formatMonthYear } from "@/lib/date-format";
+
+export default function ExpensesPage() {
+  const t = useTranslations("expenses");
+  const tCommon = useTranslations("common");
+  const locale = useLocale() as "en" | "pt";
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
+  const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<Date>(() =>
+    startOfMonth(new Date()),
+  );
+  const [chartView, setChartView] = useState<ChartView>("bar");
+  const queryClient = useQueryClient();
+
+  // Extract year and month from selectedMonth for API call
+  const year = selectedMonth.getFullYear();
+  const month = selectedMonth.getMonth() + 1; // JavaScript months are 0-indexed, API expects 1-indexed
+
+  const {
+    data: expenses = [],
+    isLoading: expensesLoading,
+    error: expensesError,
+  } = useQuery({
+    queryKey: ["expenses", "monthly", year, month],
+    queryFn: async () => {
+      return apiClient.get(
+        `/expenses/monthly?year=${year}&month=${month}`,
+        expensesSchema,
+      );
+    },
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => apiClient.get("/categories", categoriesSchema)
+  });
+
+  const { data: accounts = [] } = useQuery({
+    queryKey: ["accounts"],
+    queryFn: async () => {
+      return apiClient.get("/accounts", accountsSchema);
+    },
+  });
+
+  const { data: categorySpending = [] } = useQuery({
+    queryKey: ["categories", "spending", year, month],
+    queryFn: () => apiClient.get(`/reports/monthly-categories-budget-comparison?year=${year}&month=${month}`, categoryReportsSchema)
+  })
+
+  const { data: monthlySummary = [], isLoading: summaryLoading } = useQuery({
+    queryKey: ["expenses", "monthly", "summary", year, month],
+    queryFn: async () => {
+      return apiClient.get(
+        `/expenses/monthly/summary?year=${year}&month=${month}`,
+        monthlySummarySchema,
+      );
+    },
+  });
+
+  const {
+    data: monthlyComparison,
+    isLoading: comparisonLoading,
+  } = useQuery({
+    queryKey: ["reports", "monthly-comparison", year, month],
+    queryFn: async () => {
+      return apiClient.get(
+        `/reports/monthly-comparison?year=${year}&month=${month}`,
+        monthlyComparisonSchema,
+      );
+    },
+  });
+
+  const { data: monthlyBudgets = [] } = useQuery({
+    queryKey: ["budgets", "monthly", year, month],
+    queryFn: async () => {
+      return apiClient.get(
+        `/budgets/monthly?year=${year}&month=${month}`,
+        budgetsSchema,
+      );
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (expenseId: number) => {
+      return apiClient.delete(`/expenses/${expenseId}`, emptyResponseSchema);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses", "monthly"] });
+      queryClient.invalidateQueries({ queryKey: ["reports", "monthly-comparison"] });
+      toast.success(t("deleteSuccess"));
+      setExpenseToDelete(null);
+    },
+    onError: (error: Error) => {
+      toast.error(`${t("deleteError")} ${error.message}`);
+    },
+  });
+
+  const handleOpenCreateModal = () => {
+    setExpenseToEdit(null);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setExpenseToEdit(null);
+  };
+
+  if (expensesError) {
+    return (
+      <ProtectedRoute>
+        <AppLayout>
+          <div className="mx-auto max-w-6xl">
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-sm text-red-500">
+                  {t("errorLoading")} {(expensesError as Error).message}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </AppLayout>
+      </ProtectedRoute>
+    );
+  }
+
+  return (
+    <ProtectedRoute>
+      <AppLayout>
+        <div className="mx-auto max-w-6xl space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+              <p className="text-muted-foreground mt-2">
+                {t("description")}
+              </p>
+            </div>
+            <Button onClick={handleOpenCreateModal}>
+              <Plus className="mr-2 size-4" />
+              {t("addExpense")}
+            </Button>
+          </div>
+
+          {/* Natural Language Expense Input */}
+          <NaturalExpenseInput categories={categories} accounts={accounts} />
+
+          {/* Chart View Toggle */}
+          <div className="flex justify-end gap-2">
+            <Button
+              variant={chartView === "bar" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartView("bar")}
+            >
+              {t("barChart")}
+            </Button>
+            <Button
+              variant={chartView === "timeline" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartView("timeline")}
+            >
+              {t("timeline")}
+            </Button>
+            <Button
+              variant={chartView === "none" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartView("none")}
+            >
+              {t("none")}
+            </Button>
+          </div>
+
+          {/* Spending Visualization */}
+          {chartView === "bar" ? (
+            // <CategorySpendingChart
+            //   data={monthlySummary}
+            //   budgets={monthlyBudgets}
+            //   isLoading={summaryLoading}
+            // />
+            <CategorySpendingBarChart
+            data={categorySpending}
+           />
+          ) : chartView === "timeline" ? (
+            <ExpenseTimelineChart
+              expenses={expenses}
+              categories={categories}
+              isLoading={expensesLoading}
+            />
+          ) : null}
+
+          {/* Income vs Expenses Comparison */}
+          {monthlyComparison && (
+            <MonthlyComparisonCard
+              comparison={monthlyComparison}
+              isLoading={comparisonLoading}
+              selectedMonth={selectedMonth}
+            />
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("monthlyExpenses")}</CardTitle>
+              <CardDescription>
+                {t("expensesFor")} {formatMonthYear(selectedMonth, locale)}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Month Navigation Bar */}
+              <div className="mb-6">
+                <MonthNavigation
+                  selectedMonth={selectedMonth}
+                  onMonthChange={setSelectedMonth}
+                />
+              </div>
+              {expensesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : expenses.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <p className="text-sm font-medium">
+                    {t("noExpenses")}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {t("noExpensesDescription")}
+                  </p>
+                </div>
+              ) : (
+                <ExpensesTable
+                  expenses={expenses}
+                  categories={categories}
+                  accounts={accounts}
+                  onEdit={(expense) => {
+                    setExpenseToEdit(expense);
+                    setIsModalOpen(true);
+                  }}
+                  onDelete={setExpenseToDelete}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+
+      <ExpenseFormModal
+        mode={expenseToEdit ? "edit" : "create"}
+        expense={expenseToEdit}
+        open={isModalOpen}
+        onOpenChange={handleCloseModal}
+      />
+
+      <AlertDialog
+        open={!!expenseToDelete}
+        onOpenChange={() => setExpenseToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("deleteDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (expenseToDelete) {
+                  deleteMutation.mutate(expenseToDelete.id);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {tCommon("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </ProtectedRoute>
+  );
+}

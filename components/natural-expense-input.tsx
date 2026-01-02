@@ -12,8 +12,11 @@ import { parseExpenseInput, ParsedExpense } from "@/lib/nlp-expense-parser";
 import { apiClient } from "@/lib/api-client";
 import { expenseSchema as expenseResponseSchema } from "@/lib/api-schemas";
 import { toast } from "sonner";
-import { format, parse as dateParse } from "date-fns";
+import { parse as dateParse } from "date-fns";
 import * as LucideIcons from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
+import { formatCurrency } from "@/lib/currency";
+import { formatDateShort } from "@/lib/date-format";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Wallet: LucideIcons.Wallet,
@@ -54,6 +57,9 @@ export function NaturalExpenseInput({
   const [input, setInput] = useState("");
   const [parsed, setParsed] = useState<ParsedExpense | null>(null);
   const queryClient = useQueryClient();
+  const t = useTranslations("expenses");
+  const tCommon = useTranslations("common");
+  const locale = useLocale() as "en" | "pt";
 
   const createMutation = useMutation({
     mutationFn: async (data: {
@@ -67,11 +73,12 @@ export function NaturalExpenseInput({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
-      toast.success("Expense created successfully");
+      queryClient.invalidateQueries({ queryKey: ["reports", "monthly-comparison"] });
+      toast.success(t("createSuccess"));
       handleClear();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to create expense: ${error.message}`);
+      toast.error(`${t("createError")} ${error.message}`);
     },
   });
 
@@ -96,9 +103,7 @@ export function NaturalExpenseInput({
     const { amount, date, categoryId, accountId, description } = parsed;
 
     if (!amount || !date || !categoryId || !accountId) {
-      toast.error(
-        "Please provide all required fields: amount, category, and account",
-      );
+      toast.error(t("requiredFields"));
       return;
     }
 
@@ -125,14 +130,14 @@ export function NaturalExpenseInput({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="w-5 h-5" />
-          Quick Add with Natural Language
+          {t("quickAdd")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-2">
           <div className="flex-1 relative">
             <Input
-              placeholder='Try: "Lunch yesterday Alimentação Crédito 25"'
+              placeholder={t("quickAddPlaceholder")}
               value={input}
               onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={(e) => {
@@ -156,7 +161,7 @@ export function NaturalExpenseInput({
             disabled={!canSubmit || createMutation.isPending}
           >
             <Send className="w-4 h-4 mr-2" />
-            {createMutation.isPending ? "Adding..." : "Add"}
+            {createMutation.isPending ? t("adding") : tCommon("add")}
           </Button>
         </div>
 
@@ -164,27 +169,27 @@ export function NaturalExpenseInput({
           <div className="flex flex-wrap gap-2">
             {parsed.description && (
               <Badge variant="secondary">
-                <span className="text-xs">Description:</span>
+                <span className="text-xs">{t("descriptionLabel")}</span>
                 <span className="ml-1 font-medium">{parsed.description}</span>
               </Badge>
             )}
 
             {parsed.amount !== null && (
               <Badge variant="secondary">
-                <span className="text-xs">Amount:</span>
+                <span className="text-xs">{t("amountLabel")}</span>
                 <span className="ml-1 font-medium">
-                  ${parsed.amount.toFixed(2)}
+                  {formatCurrency({ locale, value: parsed.amount })}
                 </span>
               </Badge>
             )}
 
             {parsed.date && (
               <Badge variant="secondary">
-                <span className="text-xs">Date:</span>
+                <span className="text-xs">{t("dateLabel")}</span>
                 <span className="ml-1 font-medium">
-                  {format(
+                  {formatDateShort(
                     dateParse(parsed.date, "yyyy-MM-dd", new Date()),
-                    "MMM dd, yyyy",
+                    locale,
                   )}
                 </span>
               </Badge>
@@ -220,19 +225,19 @@ export function NaturalExpenseInput({
 
             {!category && parsed.categoryId === null && (
               <Badge variant="destructive">
-                <span className="text-xs">Category not found</span>
+                <span className="text-xs">{t("categoryNotFound")}</span>
               </Badge>
             )}
 
             {!account && parsed.accountId === null && (
               <Badge variant="destructive">
-                <span className="text-xs">Account not found</span>
+                <span className="text-xs">{t("accountNotFound")}</span>
               </Badge>
             )}
 
             {parsed.amount === null && (
               <Badge variant="destructive">
-                <span className="text-xs">Amount not found</span>
+                <span className="text-xs">{t("amountNotFound")}</span>
               </Badge>
             )}
           </div>

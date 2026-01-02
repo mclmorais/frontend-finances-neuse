@@ -32,8 +32,11 @@ import {
   emptyResponseSchema,
   Category,
 } from "@/lib/api-schemas";
+import { useTranslations } from "next-intl";
 
 export default function CategoriesPage() {
+  const t = useTranslations("categories");
+  const tCommon = useTranslations("common");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(
     null,
@@ -65,11 +68,11 @@ export default function CategoriesPage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      toast.success(`Category "${data.categoryName}" deleted successfully`);
+      toast.success(t("deleteSuccess"));
       setCategoryToDelete(null);
     },
     onError: (error: Error) => {
-      toast.error(`Failed to delete category: ${error.message}`);
+      toast.error(`${t("deleteError")} ${error.message}`);
     },
   });
 
@@ -125,7 +128,7 @@ export default function CategoriesPage() {
               <div className="flex-1">
                 <p className="font-medium">{category.name}</p>
                 <p className="text-xs text-muted-foreground capitalize">
-                  {category.type}
+                  {category.type === "expense" ? t("typeExpense") : t("typeSaving")}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -159,14 +162,14 @@ export default function CategoriesPage() {
         <div className="mx-auto max-w-4xl space-y-6">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
               <p className="text-muted-foreground mt-2">
-                Organize your transactions with custom categories
+                {t("description")}
               </p>
             </div>
             <Button onClick={() => setIsModalOpen(true)}>
               <Plus className="mr-2 size-4" />
-              Add New Category
+              {t("addNew")}
             </Button>
           </div>
 
@@ -187,7 +190,7 @@ export default function CategoriesPage() {
             <Card className="border-destructive bg-destructive/10">
               <CardContent className="pt-6">
                 <p className="text-sm text-destructive">
-                  Error loading categories: {(error as Error).message}
+                  {t("errorLoading")} {(error as Error).message}
                 </p>
               </CardContent>
             </Card>
@@ -196,30 +199,30 @@ export default function CategoriesPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Expense Categories</CardTitle>
+                <CardTitle>{t("expense")}</CardTitle>
                 <CardDescription>
-                  Categories for expense transactions
+                  {t("expenseDescription")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {renderCategoryList(
                   expenseCategories,
-                  'No expense categories yet. Click "Add Category" to create one.',
+                  t("noExpense"),
                 )}
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Saving Categories</CardTitle>
+                <CardTitle>{t("saving")}</CardTitle>
                 <CardDescription>
-                  Categories for saving transactions
+                  {t("savingDescription")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {renderCategoryList(
                   savingCategories,
-                  'No saving categories yet. Click "Add Category" to create one.',
+                  t("noSaving"),
                 )}
               </CardContent>
             </Card>
@@ -232,21 +235,21 @@ export default function CategoriesPage() {
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Category</AlertDialogTitle>
+              <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete the category{" "}
+                {t("deleteDescription")}{" "}
                 <strong className="text-foreground">
                   &ldquo;{categoryToDelete?.name}&rdquo;
                 </strong>
                 ?
                 <br />
                 <br />
-                This action cannot be undone.
+                {t("deleteDescriptionEnd")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={deleteMutation.isPending}>
-                Cancel
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={() =>
@@ -259,7 +262,7 @@ export default function CategoriesPage() {
                 disabled={deleteMutation.isPending}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                {deleteMutation.isPending ? t("deleting") : tCommon("delete")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

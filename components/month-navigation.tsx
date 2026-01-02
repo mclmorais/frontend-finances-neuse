@@ -3,7 +3,11 @@
 import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, addMonths, subMonths, isSameMonth } from "date-fns";
+import { addMonths, isSameMonth } from "date-fns";
+import { useLocale } from "next-intl";
+import { formatMonthYear } from "@/lib/date-format";
+import { format as dateFnsFormat } from "date-fns";
+import { enUS, ptBR } from "date-fns/locale";
 
 interface MonthNavigationProps {
   selectedMonth: Date;
@@ -17,6 +21,7 @@ export function MonthNavigation({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const today = new Date();
   const currentYear = today.getFullYear();
+  const locale = useLocale() as "en" | "pt";
 
   // Generate 13 months: 6 before, current, 6 after
   const months = Array.from({ length: 13 }, (_, i) => {
@@ -25,12 +30,13 @@ export function MonthNavigation({
 
   const formatMonthLabel = (date: Date) => {
     const monthYear = date.getFullYear();
+    const fnsLocale = locale === "pt" ? ptBR : enUS;
     if (monthYear === currentYear) {
       // Same year as today: show only month name
-      return format(date, "MMMM");
+      return dateFnsFormat(date, "MMMM", { locale: fnsLocale });
     } else {
       // Different year: show month and year
-      return format(date, "MMMM yyyy");
+      return formatMonthYear(date, locale);
     }
   };
 

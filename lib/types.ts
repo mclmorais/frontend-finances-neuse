@@ -22,6 +22,7 @@ export interface Expense {
   date: string;
   description: string | null;
   value: number; // API returns as number (coerced from string)
+  savingsType?: "deposit" | "withdrawal" | null;
 }
 
 export interface CreateExpenseInput {
@@ -30,6 +31,7 @@ export interface CreateExpenseInput {
   date: string; // Format: YYYY-MM-DD
   description?: string;
   value: string; // Decimal string (e.g., "10.50")
+  savingsType?: "deposit" | "withdrawal";
 }
 
 export interface UpdateExpenseInput {
@@ -38,4 +40,46 @@ export interface UpdateExpenseInput {
   date?: string;
   description?: string;
   value?: string;
+  savingsType?: "deposit" | "withdrawal" | null;
+}
+
+export interface Income {
+  id: number;
+  accountId: number;
+  date: string; // YYYY-MM-DD
+  description: string | null;
+  value: number; // API returns as number (coerced from string)
+}
+
+export interface CreateIncomeInput {
+  accountId: number;
+  date: string; // Format: YYYY-MM-DD
+  description?: string;
+  value: string; // Decimal string (e.g., "10.50")
+}
+
+export interface UpdateIncomeInput {
+  accountId?: number;
+  date?: string;
+  description?: string;
+  value?: string;
+}
+
+export interface IncomeMonthlySummary {
+  totalIncome: number;
+  incomeCount: number;
+}
+
+export type ChartView = "bar" | "timeline" | "none";
+
+export interface TimelineDataPoint {
+  date: number; // Day of month (1-31)
+  categoryId: number; // Y-axis position
+  categoryName: string;
+  categoryColor: string;
+  categoryIcon: string;
+  expenseId: number;
+  value: number; // Bubble size
+  description: string | null;
+  dateString: string; // Original date
 }

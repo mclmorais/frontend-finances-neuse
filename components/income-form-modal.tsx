@@ -28,11 +28,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { apiClient } from "@/lib/api-client";
-import { Expense, Category, Account } from "@/lib/types";
+import { Income, Account } from "@/lib/types";
 import {
-  expenseSchema as expenseResponseSchema,
+  incomeSchema as incomeResponseSchema,
   accountsSchema,
-  categoriesSchema,
 } from "@/lib/api-schemas";
 import { format, parse } from "date-fns";
 import { CalendarIcon, Wallet, type LucideIcon } from "lucide-react";
@@ -45,9 +44,8 @@ const getIconComponent = (iconName: string): LucideIcon => {
   return (typeof icon === "function" ? icon : Wallet) as LucideIcon;
 };
 
-const expenseSchema = z.object({
+const incomeSchema = z.object({
   accountId: z.number().int().positive("Account is required"),
-  categoryId: z.number().int().positive("Category is required"),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
@@ -58,34 +56,30 @@ const expenseSchema = z.object({
       "Value must be a valid decimal number (e.g., 10.50)",
     ),
   description: z.string().optional(),
-  savingsType: z.enum(["deposit", "withdrawal"]).optional(),
 });
 
-type ExpenseInput = z.infer<typeof expenseSchema>;
-type SavingsType = "deposit" | "withdrawal" | null;
+type IncomeInput = z.infer<typeof incomeSchema>;
 
-interface ExpenseFormModalProps {
+interface IncomeFormModalProps {
   mode: "create" | "edit";
-  expense?: Expense | null;
+  income?: Income | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function ExpenseFormModal({
+export function IncomeFormModal({
   mode,
-  expense,
+  income,
   open,
   onOpenChange,
-}: ExpenseFormModalProps) {
+}: IncomeFormModalProps) {
   const queryClient = useQueryClient();
   const [accountId, setAccountId] = useState<number | null>(null);
-  const [categoryId, setCategoryId] = useState<number | null>(null);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [value, setValue] = useState("");
   const [description, setDescription] = useState("");
-  const [savingsType, setSavingsType] = useState<SavingsType>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const prevExpenseIdRef = useRef<number | null>(null);
+  const prevIncomeIdRef = useRef<number | null>(null);
 
   // Fetch accounts
   const { data: accounts = [] } = useQuery({
@@ -95,98 +89,66 @@ export function ExpenseFormModal({
     },
   });
 
-  // Fetch categories (only expense type)
-  const { data: allCategories = [] } = useQuery({
-    queryKey: ["categories"],
-    queryFn: async () => {
-      return apiClient.get("/categories", categoriesSchema);
-    },
-  });
-
-  // Include both expense and saving categories
-  const categories = allCategories.filter(
-    (cat) => cat.type === "expense" || cat.type === "saving"
-  );
-
-  // Check if selected category is a savings category
-  const selectedCategory = categoryId
-    ? allCategories.find((cat) => cat.id === categoryId)
-    : null;
-  const isSavingsCategory = selectedCategory?.type === "saving";
-
   // Populate form when editing
   useEffect(() => {
-    if (mode === "edit" && expense && expense.id !== prevExpenseIdRef.current) {
-      prevExpenseIdRef.current = expense.id;
+    if (mode === "edit" && income && income.id !== prevIncomeIdRef.current) {
+      prevIncomeIdRef.current = income.id;
       startTransition(() => {
-        setAccountId(expense.accountId);
-        setCategoryId(expense.categoryId);
+        setAccountId(income.accountId);
         // Parse date string as local date to avoid timezone shift
-        setDate(parse(expense.date, "yyyy-MM-dd", new Date()));
+        setDate(parse(income.date, "yyyy-MM-dd", new Date()));
         // Convert number to string for form input
-        setValue(expense.value.toString());
-        setDescription(expense.description || "");
-        setSavingsType(expense.savingsType ?? null);
+        setValue(income.value.toString());
+        setDescription(income.description || "");
         setErrors({});
       });
     }
-  }, [mode, expense]);
-
-  // Reset savingsType when category changes to non-savings
-  useEffect(() => {
-    if (!isSavingsCategory) {
-      setSavingsType(null);
-    }
-  }, [isSavingsCategory]);
+  }, [mode, income]);
 
   const createMutation = useMutation({
-    mutationFn: async (data: ExpenseInput) => {
-      return apiClient.post("/expenses", expenseResponseSchema, data);
+    mutationFn: async (data: IncomeInput) => {
+      return apiClient.post("/incomes", incomeResponseSchema, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["reports", "monthly-comparison"] });
+      queryClient.invalidateQueries({ queryKey: ["incomes"] });
       resetForm();
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      console.error("Failed to create expense:", error);
-      setErrors({ submit: error.message || "Failed to create expense" });
+      console.error("Failed to create income:", error);
+      setErrors({ submit: error.message || "Failed to create income" });
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: async ({
-      expenseId,
+      incomeId,
       data,
     }: {
-      expenseId: number;
-      data: ExpenseInput;
+      incomeId: number;
+      data: IncomeInput;
     }) => {
       return apiClient.patch(
-        `/expenses/${expenseId}`,
-        expenseResponseSchema,
+        `/incomes/${incomeId}`,
+        incomeResponseSchema,
         data,
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["reports", "monthly-comparison"] });
+      queryClient.invalidateQueries({ queryKey: ["incomes"] });
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      console.error("Failed to update expense:", error);
-      setErrors({ submit: error.message || "Failed to update expense" });
+      console.error("Failed to update income:", error);
+      setErrors({ submit: error.message || "Failed to update income" });
     },
   });
 
   const resetForm = () => {
     setAccountId(null);
-    setCategoryId(null);
     setDate(new Date());
     setValue("");
     setDescription("");
-    setSavingsType(null);
     setErrors({});
   };
 
@@ -194,22 +156,14 @@ export function ExpenseFormModal({
     e.preventDefault();
     setErrors({});
 
-    // Validate savingsType for savings categories
-    if (isSavingsCategory && !savingsType) {
-      setErrors({ savingsType: "Please select deposit or withdrawal" });
-      return;
-    }
-
     const data = {
       accountId: accountId!,
-      categoryId: categoryId!,
       date: date ? format(date, "yyyy-MM-dd") : "",
       value,
       description: description || undefined,
-      savingsType: isSavingsCategory ? savingsType ?? undefined : undefined,
     };
 
-    const result = expenseSchema.safeParse(data);
+    const result = incomeSchema.safeParse(data);
 
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
@@ -224,8 +178,8 @@ export function ExpenseFormModal({
 
     if (mode === "create") {
       createMutation.mutate(result.data);
-    } else if (mode === "edit" && expense) {
-      updateMutation.mutate({ expenseId: expense.id, data: result.data });
+    } else if (mode === "edit" && income) {
+      updateMutation.mutate({ incomeId: income.id, data: result.data });
     }
   };
 
@@ -246,27 +200,12 @@ export function ExpenseFormModal({
     );
   };
 
-  const getCategoryDisplay = (category: Category) => {
-    const IconComponent = getIconComponent(category.icon);
-    return (
-      <div className="flex items-center gap-2">
-        <div
-          className="w-6 h-6 rounded flex items-center justify-center"
-          style={{ backgroundColor: category.color }}
-        >
-          <IconComponent className="w-4 h-4 text-white" />
-        </div>
-        <span>{category.name}</span>
-      </div>
-    );
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" ? "Add New Expense" : "Edit Expense"}
+            {mode === "create" ? "Add New Income" : "Edit Income"}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -295,62 +234,6 @@ export function ExpenseFormModal({
                 <p className="text-sm text-red-500">{errors.accountId}</p>
               )}
             </div>
-
-            {/* Category Selection */}
-            <div className="grid gap-2">
-              <Label htmlFor="category">Category</Label>
-              <Select
-                value={categoryId?.toString()}
-                onValueChange={(value) => setCategoryId(parseInt(value))}
-              >
-                <SelectTrigger
-                  className={errors.categoryId ? "border-red-500" : ""}
-                >
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem
-                      key={category.id}
-                      value={category.id.toString()}
-                    >
-                      {getCategoryDisplay(category)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.categoryId && (
-                <p className="text-sm text-red-500">{errors.categoryId}</p>
-              )}
-            </div>
-
-            {/* Savings Type Selection - Only shown for savings categories */}
-            {isSavingsCategory && (
-              <div className="grid gap-2">
-                <Label>Transaction Type</Label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={savingsType === "deposit" ? "default" : "outline"}
-                    className="flex-1"
-                    onClick={() => setSavingsType("deposit")}
-                  >
-                    Deposit
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={savingsType === "withdrawal" ? "default" : "outline"}
-                    className="flex-1"
-                    onClick={() => setSavingsType("withdrawal")}
-                  >
-                    Withdrawal
-                  </Button>
-                </div>
-                {errors.savingsType && (
-                  <p className="text-sm text-red-500">{errors.savingsType}</p>
-                )}
-              </div>
-            )}
 
             {/* Date Picker */}
             <div className="grid gap-2">
@@ -410,7 +293,7 @@ export function ExpenseFormModal({
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter expense description"
+                placeholder="Enter income description"
                 autoComplete="off"
                 data-1p-ignore
                 data-lpignore="true"
@@ -443,8 +326,8 @@ export function ExpenseFormModal({
                   ? "Creating..."
                   : "Updating..."
                 : mode === "create"
-                  ? "Add Expense"
-                  : "Update Expense"}
+                  ? "Add Income"
+                  : "Update Income"}
             </Button>
           </DialogFooter>
         </form>

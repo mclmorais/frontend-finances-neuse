@@ -32,8 +32,11 @@ import {
   emptyResponseSchema,
   Account,
 } from "@/lib/api-schemas";
+import { useTranslations } from "next-intl";
 
 export default function AccountsPage() {
+  const t = useTranslations("accounts");
+  const tCommon = useTranslations("common");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
   const [accountToEdit, setAccountToEdit] = useState<Account | null>(null);
@@ -56,11 +59,11 @@ export default function AccountsPage() {
     },
     onSuccess: (deletedAccount) => {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      toast.success(`Account "${deletedAccount.name}" deleted successfully`);
+      toast.success(t("deleteSuccess"));
       setAccountToDelete(null);
     },
     onError: (error: Error) => {
-      toast.error(`Failed to delete account: ${error.message}`);
+      toast.error(`${t("deleteError")} ${error.message}`);
     },
   });
 
@@ -79,7 +82,7 @@ export default function AccountsPage() {
     if (accountsList.length === 0) {
       return (
         <p className="text-sm text-muted-foreground py-4">
-          No accounts yet. Click &quot;Add New Account&quot; to create one.
+          {t("noAccounts")}
         </p>
       );
     }
@@ -139,14 +142,14 @@ export default function AccountsPage() {
         <div className="mx-auto max-w-4xl space-y-6">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Accounts</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
               <p className="text-muted-foreground mt-2">
-                Manage your financial accounts
+                {t("description")}
               </p>
             </div>
             <Button onClick={() => setIsModalOpen(true)}>
               <Plus className="mr-2 size-4" />
-              Add New Account
+              {t("addNew")}
             </Button>
           </div>
 
@@ -167,7 +170,7 @@ export default function AccountsPage() {
             <Card className="border-destructive bg-destructive/10">
               <CardContent className="pt-6">
                 <p className="text-sm text-destructive">
-                  Error loading accounts: {(error as Error).message}
+                  {t("errorLoading")} {(error as Error).message}
                 </p>
               </CardContent>
             </Card>
@@ -175,9 +178,9 @@ export default function AccountsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Your Accounts</CardTitle>
+              <CardTitle>{t("yourAccounts")}</CardTitle>
               <CardDescription>
-                All your financial accounts in one place
+                {t("yourAccountsDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent>{renderAccountList()}</CardContent>
@@ -190,21 +193,21 @@ export default function AccountsPage() {
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Account</AlertDialogTitle>
+              <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete the account{" "}
+                {t("deleteDescription")}{" "}
                 <strong className="text-foreground">
                   &ldquo;{accountToDelete?.name}&rdquo;
                 </strong>
                 ?
                 <br />
                 <br />
-                This action cannot be undone.
+                {t("deleteDescriptionEnd")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={deleteMutation.isPending}>
-                Cancel
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={() =>
@@ -213,7 +216,7 @@ export default function AccountsPage() {
                 disabled={deleteMutation.isPending}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                {deleteMutation.isPending ? t("deleting") : tCommon("delete")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
