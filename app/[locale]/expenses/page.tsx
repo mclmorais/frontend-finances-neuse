@@ -27,11 +27,11 @@ import { apiClient } from "@/lib/api-client";
 import { ExpenseFormModal } from "@/components/expense-form-modal";
 import { ExpensesTable } from "@/components/expenses-table";
 import { MonthNavigation } from "@/components/month-navigation";
-import { CategorySpendingChart } from "@/components/category-spending-chart";
 import { ExpenseTimelineChart } from "@/components/expense-timeline-chart";
+import { ExpenseSankeyChart } from "@/components/expense-sankey-chart";
 import { NaturalExpenseInput } from "@/components/natural-expense-input";
 import { MonthlyComparisonCard } from "@/components/monthly-comparison-card";
-import { Expense, Category, Account, ChartView } from "@/lib/types";
+import { Expense, ChartView } from "@/lib/types";
 import {
   expensesSchema,
   categoriesSchema,
@@ -41,6 +41,7 @@ import {
   monthlyComparisonSchema,
   budgetsSchema,
   categoryReportsSchema,
+  incomesSchema,
 } from "@/lib/api-schemas";
 import { toast } from "sonner";
 import { startOfMonth } from "date-fns";
@@ -95,6 +96,16 @@ export default function ExpensesPage() {
     queryKey: ["categories", "spending", year, month],
     queryFn: () => apiClient.get(`/reports/monthly-categories-budget-comparison?year=${year}&month=${month}`, categoryReportsSchema)
   })
+
+  const { data: incomes = [] } = useQuery({
+    queryKey: ["incomes", "monthly", year, month],
+    queryFn: async () => {
+      return apiClient.get(
+        `/incomes/monthly?year=${year}&month=${month}`,
+        incomesSchema,
+      );
+    },
+  });
 
   const { data: monthlySummary = [], isLoading: summaryLoading } = useQuery({
     queryKey: ["expenses", "monthly", "summary", year, month],
@@ -209,6 +220,13 @@ export default function ExpensesPage() {
               {t("timeline")}
             </Button>
             <Button
+              variant={chartView === "sankey" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartView("sankey")}
+            >
+              {t("sankey")}
+            </Button>
+            <Button
               variant={chartView === "none" ? "default" : "outline"}
               size="sm"
               onClick={() => setChartView("none")}
@@ -231,6 +249,14 @@ export default function ExpensesPage() {
             <ExpenseTimelineChart
               expenses={expenses}
               categories={categories}
+              isLoading={expensesLoading}
+            />
+          ) : chartView === "sankey" ? (
+            <ExpenseSankeyChart
+              incomes={incomes}
+              expenses={expenses}
+              categories={categories}
+              accounts={accounts}
               isLoading={expensesLoading}
             />
           ) : null}

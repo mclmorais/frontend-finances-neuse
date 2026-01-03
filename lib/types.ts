@@ -70,7 +70,7 @@ export interface IncomeMonthlySummary {
   incomeCount: number;
 }
 
-export type ChartView = "bar" | "timeline" | "none";
+export type ChartView = "bar" | "timeline" | "sankey" | "none";
 
 export interface TimelineDataPoint {
   date: number; // Day of month (1-31)

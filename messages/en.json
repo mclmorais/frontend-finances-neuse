@@ -105,6 +105,7 @@
     "createError": "Failed to create expense:",
     "barChart": "Bar Chart",
     "timeline": "Timeline",
+    "sankey": "Sankey",
     "none": "None",
     "quickAdd": "Quick Add with Natural Language",
     "quickAddPlaceholder": "Try: \"Almoço ontem Alimentação Crédito $22,50\"",
@@ -123,7 +124,11 @@
     "noExpensesThisMonth": "No expenses for this month",
     "noSpendingData": "No spending data available for this month",
     "total": "Total:",
-    "dayOfMonth": "Day of Month"
+    "dayOfMonth": "Day of Month",
+    "incomeFlow": "Income Flow",
+    "noIncomeForSankey": "No income data available for this month",
+    "noExpensesForSankey": "No expenses data available for this month",
+    "noFlowData": "No flow data available. Income and expenses must use the same accounts."
   },
   "incomes": {
     "title": "Incomes",

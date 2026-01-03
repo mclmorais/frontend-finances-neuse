@@ -105,6 +105,7 @@
     "createError": "Falha ao criar despesa:",
     "barChart": "Gráfico de Barras",
     "timeline": "Linha do Tempo",
+    "sankey": "Sankey",
     "none": "Nenhum",
     "quickAdd": "Adição Rápida com Linguagem Natural",
     "quickAddPlaceholder": "Tente: \"Almoço ontem Alimentação Crédito R$ 22,50\"",
@@ -123,7 +124,11 @@
     "noExpensesThisMonth": "Nenhuma despesa para este mês",
     "noSpendingData": "Nenhum dado de gastos disponível para este mês",
     "total": "Total:",
-    "dayOfMonth": "Dia do Mês"
+    "dayOfMonth": "Dia do Mês",
+    "incomeFlow": "Fluxo de Receitas",
+    "noIncomeForSankey": "Nenhuma receita disponível para este mês",
+    "noExpensesForSankey": "Nenhuma despesa disponível para este mês",
+    "noFlowData": "Nenhum dado de fluxo disponível. Receitas e despesas devem usar as mesmas contas."
   },
   "incomes": {
     "title": "Receitas",
